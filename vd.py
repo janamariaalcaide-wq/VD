@@ -13,7 +13,6 @@ import streamlit as st
 import pandas as pd
 import glob
 import re
-from google.colab import drive
 import os
 import numpy as np
 from sklearn.metrics import (
@@ -23,7 +22,6 @@ from sklearn.metrics import (
 
 """# Preprocesado y Análisis"""
 
-drive.mount('/content/drive')
 
 import re
 import glob
@@ -85,16 +83,16 @@ def cargar_archivos(patron, columna_nvariables=True, columna_nfolds=True, column
     df_total = pd.concat(dfs, ignore_index=True)
     return df_total
 
-patron_testpredcv = "/content/drive/MyDrive/VD/TestPredCV_ID_2C_NvsSD_nR0_nV*_nF*_Seed*.csv"
+patron_testpredcv = "DATOS/TestPredCV_ID_2C_NvsSD_nR0_nV*_nF*_Seed*.csv"
 df_testpredcv_prev = cargar_archivos(patron_testpredcv, columna_nvariables=True,columna_nfolds=True)
 
-patron_leaderboard = "/content/drive/MyDrive/VD/leaderboard_testset_ID_2C_NvsSD_nR0_nV*_nF*_Seed*_Fold*.csv"
+patron_leaderboard = "DATOS/leaderboard_testset_ID_2C_NvsSD_nR0_nV*_nF*_Seed*_Fold*.csv"
 df_leaderboard = cargar_archivos(patron_leaderboard, columna_nvariables=True,columna_nfolds=True)
 
-patron_feature_importance = "/content/drive/MyDrive/VD/FeatureImportance_ID_2C_NvsSD_nR0_nV*_nF*.csv"
+patron_feature_importance = "DATOS/FeatureImportance_ID_2C_NvsSD_nR0_nV*_nF*.csv"
 df_feature_importance = cargar_archivos(patron_feature_importance, columna_nvariables=True,columna_nfolds=True)
 
-patron_metrics = "/content/drive/MyDrive/VD/Metrics_CV_ID_2C_NvsSD_nR0_nV*_nF*_Seed*.csv"
+patron_metrics = "DATOS/Metrics_CV_ID_2C_NvsSD_nR0_nV*_nF*_Seed*.csv"
 df_metrics = cargar_archivos(patron_metrics, columna_nvariables=True,columna_nfolds=True)
 
 #Pivoto df_testpredcv que tiene los valores para modelos en columnas
