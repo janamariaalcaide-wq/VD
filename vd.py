@@ -257,7 +257,7 @@ stats = df_top.groupby('Seed')['ROC_AUC'].agg(['mean', 'min', 'max']).reset_inde
 lines_data = pd.DataFrame({
     'Seed': list(stats['Seed']) * 3,
     'value': list(stats['mean']) + list(stats['min']) + list(stats['max']),
-    'label': ['mean']]*len(stats) + ['min']*len(stats) + ['max']*len(stats)
+    'label': ['mean']*len(stats) + ['min']*len(stats) + ['max']*len(stats)
 })
 
 # Gráfico de barras: media de ROC_AUC por seed
