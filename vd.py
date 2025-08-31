@@ -204,7 +204,7 @@ df_metrics = renombrar_columnas(df_metrics, mapeo_metricas)
 df_leaderboard = renombrar_columnas(df_leaderboard, mapeo_metricas)
 
 df_leaderboard = df_leaderboard[df_leaderboard['Model'].str.startswith('CatBoost')]
-df_testpredcv = df_testpredcv_prev[df_testpredcv_prev['Model'].str.startswith('CatBoost')]
+df_testpredcv = df_testpredcv[df_testpredcv_prev['Model'].str.startswith('CatBoost')]
 df_feature_importance = df_feature_importance[df_feature_importance['Model'].str.startswith('CatBoost')]
 df_metrics = df_metrics[df_metrics['Model'].str.startswith('CatBoost')]
 #""" Presentación
