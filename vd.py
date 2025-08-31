@@ -346,7 +346,7 @@ st.altair_chart(chart, use_container_width=True)
 avg_by_vars = filtered_df.groupby('Nvariables').agg({'ROC_AUC': 'mean'}).reset_index()
 
 # Agrupar por número de folds y calcular media
-avg_by_folds = filtered_df.groupby('NFolds').agg({'ROC_AUC': 'mean'}).reset_index()
+avg_by_folds = filtered_df.groupby('nFolds').agg({'ROC_AUC': 'mean'}).reset_index()
 
 # Gráfico de barras para número de variables
 chart_vars = alt.Chart(avg_by_vars).mark_bar().encode(
@@ -360,10 +360,39 @@ chart_vars = alt.Chart(avg_by_vars).mark_bar().encode(
 
 # Gráfico de barras para número de folds
 chart_folds = alt.Chart(avg_by_folds).mark_bar().encode(
-    x=alt.X('NFolds:N', title='Número de Folds'),
+    x=alt.X('nFolds:N', title='Número de Folds'),
     y=alt.Y('ROC_AUC:Q', title='Media ROC_AUC'),
-    color=alt.Color('NFolds:N', legend=alt.Legend(title='Folds')),
-    tooltip=['NFolds', 'ROC_AUC']
+    color=alt.Color('nFolds:N', legend=alt.Legend(title='Folds')),
+    tooltip=['nFolds', 'ROC_AUC']
 ).properties(
     title='Media de ROC_AUC por Número de Folds'
 )
+
+df_filtered = df_feature_importance[
+    (df_feature_importance['Nvariables'].isin(nvariables_filter)) &
+    (df_feature_importance['nFolds'].isin(nfolds_filter)) &
+    (df_feature_importance['Seed'].isin(seed_filter)) &
+    (df_feature_importance['Model'].isin(selected_models))
+]
+
+# Agrupar por feature y calcular la importancia media
+importance_media = df_filtered.groupby('feature').agg({
+    'importance': 'mean'
+}).reset_index()
+
+# Ordenar las variables por importancia media descendente
+importance_media = importance_media.sort_values(by='importance', ascending=False)
+
+# Crear gráfico de barras horizontales
+chart = alt.Chart(importance_media).mark_bar().encode(
+    y=alt.Y('feature:N', sort='-x', title='Variables'),
+    x=alt.X('importance:Q', title='Importancia media'),
+    tooltip=['feature', 'importance']
+).properties(
+    width=700,
+    height=importance_media.shape[0] * 25,  # ajusta la altura según número de variables
+    title='Ranking de variables por importancia media'
+)
+
+# Mostrar en Streamlit
+st.altair_chart(chart, use_container_width=True)
