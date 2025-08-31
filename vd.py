@@ -292,8 +292,8 @@ labels = alt.Chart(lines_data).mark_text(
 chart_combined = alt.layer(bars, lines, labels).resolve_scale(
     y='shared'
 ).properties(
-    width=600,
-    height=400,
+    width=1000,
+    height=1000,
     title='ROC_AUC medio por Seed con escala fija y líneas de referencia'
 )
 
@@ -316,8 +316,8 @@ with col2:
         color=alt.Color('Model', legend=alt.Legend(title="Model")),
         tooltip=['Model','ROC_AUC','Precision_macro','Recall_macro']
     ).properties(
-        width=700,
-        height=500,
+        width=1000,
+        height=1000,
         title='Modelos con métricas medias: Precisión vs Recall, tamaño por ROC_AUC'
     )
     st.altair_chart(chart, use_container_width=True)
