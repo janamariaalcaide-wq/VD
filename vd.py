@@ -287,8 +287,6 @@ chart_combined = alt.layer(bars, lines, labels).resolve_scale(
     height=400,
     title='ROC_AUC medio por Seed con escala fija y líneas de referencia'
 )
-    y='shared'
-)
 
 # Parte superior: dos columnas para el boxplot y el diagrama de burbujas
 col1, col2 = st.columns([1, 2])  # ajusta los ratios
