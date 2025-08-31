@@ -343,27 +343,27 @@ st.altair_chart(chart, use_container_width=True)
 # 'num_variables', 'num_folds', 'ROC_AUC'
 
 # Agrupar por número de variables y calcular media
-avg_by_vars = filtered_df.groupby('num_variables').agg({'ROC_AUC': 'mean'}).reset_index()
+avg_by_vars = filtered_df.groupby('Nvariables').agg({'ROC_AUC': 'mean'}).reset_index()
 
 # Agrupar por número de folds y calcular media
-avg_by_folds = filtered_df.groupby('num_folds').agg({'ROC_AUC': 'mean'}).reset_index()
+avg_by_folds = filtered_df.groupby('NFolds').agg({'ROC_AUC': 'mean'}).reset_index()
 
 # Gráfico de barras para número de variables
 chart_vars = alt.Chart(avg_by_vars).mark_bar().encode(
-    x=alt.X('num_variables:N', title='Número de Variables'),
+    x=alt.X('Nvariables:N', title='Número de Variables'),
     y=alt.Y('ROC_AUC:Q', title='Media ROC_AUC'),
-    color=alt.Color('num_variables:N', legend=alt.Legend(title='Variables')),
-    tooltip=['num_variables', 'ROC_AUC']
+    color=alt.Color('Nvariables:N', legend=alt.Legend(title='Variables')),
+    tooltip=['Nvariables', 'ROC_AUC']
 ).properties(
     title='Media de ROC_AUC por Número de Variables'
 )
 
 # Gráfico de barras para número de folds
 chart_folds = alt.Chart(avg_by_folds).mark_bar().encode(
-    x=alt.X('num_folds:N', title='Número de Folds'),
+    x=alt.X('NFolds:N', title='Número de Folds'),
     y=alt.Y('ROC_AUC:Q', title='Media ROC_AUC'),
-    color=alt.Color('num_folds:N', legend=alt.Legend(title='Folds')),
-    tooltip=['num_folds', 'ROC_AUC']
+    color=alt.Color('NFolds:N', legend=alt.Legend(title='Folds')),
+    tooltip=['NFolds', 'ROC_AUC']
 ).properties(
     title='Media de ROC_AUC por Número de Folds'
 )
