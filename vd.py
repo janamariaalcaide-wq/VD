@@ -316,12 +316,16 @@ selected_models = st.multiselect(
 # Ahora, filtra el DataFrame original para incluir solo los modelos seleccionados
 filtered_df = df_top[df_top['Model'].isin(selected_models)]
 
-
+model_means = filtered_df.groupby('Model').agg({
+    'ROC_AUC': 'mean',
+    'Precision_macro': 'mean',
+    'Recall_macro': 'mean'
+}).reset_index()
 
 
 # Aquí tu diagrama de burbujas
 chart = alt.Chart(
-    filtered_df
+    model_means
 ).mark_circle().encode(
     x=alt.X('Precision_macro', title='Precisión', scale=alt.Scale(domain=[0.7, 0.9])),
     y=alt.Y('Recall_macro', title='Recall', scale=alt.Scale(domain=[0.7, 0.9])),
