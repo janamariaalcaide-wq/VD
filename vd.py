@@ -265,16 +265,13 @@ grouped_df = filtered_df.groupby('Model').agg({
 chart = alt.Chart(grouped_df).mark_circle().encode(
     x=alt.X('Precision_macro', title='Precisión', scale=alt.Scale(domain=[0.7, 1])),
     y=alt.Y('Recall_macro', title='Recall', scale=alt.Scale(domain=[0.7, 1])),
-    size=alt.Size('ROC_AUC', title='ROC AUC', scale=alt.Scale(range=[10, 100])),  # círculos más grandes
+    size=alt.Size('ROC_AUC', title='ROC_AUC', scale=alt.Scale(range=[50, 100])),
     color=alt.Color('Model', legend=alt.Legend(title="Model")),
-    tooltip=[
-        alt.Tooltip('Model'),
-        alt.Tooltip('Precision_macro', title='Precisión'),
-        alt.Tooltip('Recall_macro', title='Recall'),
-        alt.Tooltip('ROC_AUC', title='ROC AUC')
-    ]
+    tooltip=['Model']
 ).properties(
     width=700,
     height=500,
     title='Modelos con métricas medias: Precisión vs Recall, tamaño por ROC_AUC'
 )
+
+st.altair_chart(chart, use_container_width=True)
