@@ -20,6 +20,7 @@ from sklearn.metrics import (
     roc_auc_score, average_precision_score, log_loss
 )
 import altair as alt
+import matplotlib.pyplot as plt
 
 
 def cargar_archivos(patron, columna_nvariables=True, columna_nfolds=True, columna_fold=True):
