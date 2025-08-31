@@ -90,6 +90,13 @@ df_feature_importance = cargar_archivos(patron_feature_importance, columna_nvari
 patron_metrics = "DATOS/Metrics_CV_ID_2C_NvsSD_nR0_nV*_nF*_Seed*.csv"
 df_metrics = cargar_archivos(patron_metrics, columna_nvariables=True,columna_nfolds=True)
 
+df_leaderboard = df_leaderboard[df_leaderboard['Model'].str.startswith('CatBoost')]
+df_testpredcv = df_testpredcv_prev[df_testpredcv_prev['Model'].str.startswith('CatBoost')]
+df_feature_importance = df_feature_importance[df_feature_importance['Model'].str.startswith('CatBoost')]
+df_metrics = df_metrics[df_metrics['Model'].str.startswith('CatBoost')]
+
+
+
 #Pivoto df_testpredcv que tiene los valores para modelos en columnas
 def extraer_modelos(df):
     modelos = set()
@@ -395,4 +402,53 @@ chart = alt.Chart(importance_media).mark_bar().encode(
 )
 
 # Mostrar en Streamlit
+st.altair_chart(chart, use_container_width=True)
+
+# 1. Filtra df_leaderboard
+df_filtered = df_leaderboard[
+    (df_leaderboard['Nvariables'].isin(nvariables_filter)) &
+    (df_leaderboard['nFolds'].isin(nfolds_filter)) &
+    (df_leaderboard['Seed'].isin(seed_filter)) &
+    (df_leaderboard['Model'].isin(selected_models))
+]
+
+# 2. Calcula la media de ROC AUC por fold
+roc_auc_per_fold = df_filtered.groupby('Fold')['Score_Test'].mean().reset_index()
+
+# 3. Obtén el ROC AUC total para todo el dataset (puede estar en un registro específico o calcularlo)
+# Si tienes una predicción global, sería algo así:
+# Supón que en `df_leaderboard` hay una fila con `Fold == 'Total'` o similar
+# Si no, deberías calcularlo con las predicciones en conjunto.
+roc_auc_total = df_leaderboard[df_leaderboard['Fold'] == 'Total']['Score_Test'].values
+# Si no tienes fila 'Total', deberías calcularlo desde las predicciones completas
+
+# Para ejemplo:
+if len(roc_auc_total) == 0:
+    # Aquí debes calcularlo desde las predicciones globales
+    # Por ejemplo, si tienes los valores verdaderos y predichos:
+    # from sklearn.metrics import roc_auc_score
+    # roc_auc_total_value = roc_auc_score(y_true_total, y_pred_total)
+    roc_auc_total_value = None
+else:
+    roc_auc_total_value = roc_auc_total[0]
+
+# 4. Visualización
+import altair as alt
+
+# Crear DataFrame para plot
+df_plot = roc_auc_per_fold.copy()
+# Añadir la línea del valor total
+df_plot = df_plot.append({'Fold': 'Total', 'Score_Test': roc_auc_total_value}, ignore_index=True)
+
+# Gráfico de barras
+chart = alt.Chart(df_plot).mark_bar().encode(
+    y=alt.Y('Fold:N', sort='-x', title='Fold'),
+    x=alt.X('Score_Test:Q', title='ROC AUC'),
+    tooltip=['Fold', 'Score_Test']
+).properties(
+    width=600,
+    height=300,
+    title='ROC AUC por fold y total'
+)
+
 st.altair_chart(chart, use_container_width=True)
