@@ -217,10 +217,10 @@ nvariables_options = sorted(df['Nvariables'].unique())
 nfolds_options = sorted(df['nFolds'].unique())
 seed_options = sorted(df['Seed'].unique())
 
-nvariables_filter = st.sidebar.selectbox(
+nvariables_filter = st.sidebar.multiselect(
     "Número de variables del modelo",
     options=nvariables_options,
-    index=0
+    options=nvariables_options
 )
 
 nfolds_filter = st.sidebar.multiselect(
@@ -269,11 +269,16 @@ with col1:
     ax.set_ylabel('ROC_AUC')
     ax.set_title('Distribución de ROC_AUC por Seed')
     st.pyplot(fig)
+    st.write("### Información adicional 1")
+    st.write(f"Seed con mínimo ROC_AUC: {min_seed}")
+    st.write(f"Seed con máximo ROC_AUC: {max_seed}")
+    st.write(f"Seed más cercano al promedio: {closest_seed}")
+    st.write(f"Valor promedio de ROC_AUC: {mean_value:.3f}")
 
 with col2:
     # Aquí tu diagrama de burbujas
     chart = alt.Chart(
-        grouped_df
+        df
     ).mark_circle().encode(
         x=alt.X('Precision_macro', title='Precisión', scale=alt.Scale(domain=[0.7, 0.9])),
         y=alt.Y('Recall_macro', title='Recall', scale=alt.Scale(domain=[0.7, 0.9])),
@@ -296,6 +301,9 @@ with col3:
     st.write(f"Seed con máximo ROC_AUC: {max_seed}")
     st.write(f"Seed más cercano al promedio: {closest_seed}")
     st.write(f"Valor promedio de ROC_AUC: {mean_value:.3f}")
+    st.write("### Otra visualización o datos")
+    # Puedes poner otro gráfico o datos aquí
+    st.write("Aquí puedes agregar otro gráfico o información.")
 
 with col4:
     st.write("### Otra visualización o datos")
