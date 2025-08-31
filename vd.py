@@ -244,33 +244,53 @@ df_top = df[
 
 roc_by_seed = df.groupby('Seed')['ROC_AUC'].mean().reset_index()
 
-# Calculamos el valor medio global
+# Calculamos el valor medio, máximo y mínimo
 mean_roc = roc_by_seed['ROC_AUC'].mean()
+max_roc = roc_by_seed['ROC_AUC'].max()
+min_roc = roc_by_seed['ROC_AUC'].min()
 
-# Gráfico de barras: ROC_AUC medio por seed
+# Datos para las líneas
+lines_data = pd.DataFrame({
+    'value': [mean_roc, max_roc, min_roc],
+    'label': ['Media', 'Máximo', 'Mínimo']
+})
+
+# Gráfico de barras
 bars = alt.Chart(roc_by_seed).mark_bar().encode(
     x=alt.X('Seed:N', title='Seed'),
-    y=alt.Y('ROC_AUC:Q', title='ROC_AUC medio'),
+    y=alt.Y('ROC_AUC:Q', title='ROC_AUC medio', scale=alt.Scale(domain=[0.7, 1])),
     tooltip=['Seed', 'ROC_AUC']
+)
+
+# Líneas para media, máximo y mínimo
+lines = alt.Chart(lines_data).mark_rule().encode(
+    y='value:Q',
+    color=alt.Color('label:N', legend=None),
+    strokeDash=alt.condition(
+        alt.datum.label == 'Media', alt.value([5,5]),
+        alt.value([1,0])  # línea sólida para max y min
+    )
 ).properties(
     width=600,
-    height=400,
-    title='ROC_AUC medio por Seed'
+    height=400
+).transform_filter(
+    alt.FieldOneOfPredicate(field='label', oneOf=['Media', 'Máximo', 'Mínimo'])
 )
 
-# Línea con el valor medio global
-mean_line = alt.Chart(pd.DataFrame({'y': [mean_roc]})).mark_rule(color='red', strokeDash=[5,5]).encode(
-    y='y:Q'
-).properties(
-    title='Media global de ROC_AUC'
+# Añadimos texto para las líneas
+texts = alt.Chart(lines_data).mark_text(
+    align='left',
+    dx=5,
+    dy=-5
+).encode(
+    y='value:Q',
+    text='label:N'
 )
 
-# Combinamos gráficos
-chart_combined = alt.layer(bars, mean_line).resolve_scale(
+# Combinamos todo
+chart_combined = alt.layer(bars, lines, texts).resolve_scale(
     y='shared'
 )
-
-st.altair_chart(chart_combined, use_container_width=True)
 
 # Parte superior: dos columnas para el boxplot y el diagrama de burbujas
 col1, col2 = st.columns([1, 2])  # ajusta los ratios
@@ -301,12 +321,7 @@ with col2:
 col3, col4 = st.columns(2)
 
 with col3:
-    st.write("### Información adicional 1")
-    st.write(f"Seed con mínimo ROC_AUC: {min_seed}")
-    st.write(f"Seed con máximo ROC_AUC: {max_seed}")
-    st.write(f"Seed más cercano al promedio: {closest_seed}")
-    st.write(f"Valor promedio de ROC_AUC: {mean_value:.3f}")
-    st.write("### Otra visualización o datos")
+
     # Puedes poner otro gráfico o datos aquí
     st.write("Aquí puedes agregar otro gráfico o información.")
 
