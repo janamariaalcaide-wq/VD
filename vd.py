@@ -19,7 +19,7 @@ from sklearn.metrics import (
     precision_score, recall_score, f1_score,
     roc_auc_score, average_precision_score, log_loss
 )
-import Altair as Alt
+import altair as alt
 
 
 def cargar_archivos(patron, columna_nvariables=True, columna_nfolds=True, columna_fold=True):
@@ -197,15 +197,13 @@ df_metrics = renombrar_columnas(df_metrics, mapeo_metricas)
 df_leaderboard = renombrar_columnas(df_leaderboard, mapeo_metricas)
 
 
-"""# Presentación
+#""" Presentación
+#Voy a acometer objetivos en primer lugar:
+#- Dadas varias particiones del conjunto de entrenamiento, ¿qué partición tiene un comportamiento medio, cuál tiene el peor comportamiento y cuál el mejor?
+#- Dados varios modelos de ML que solucionan el problema. ¿Cuáles son los 5 modelos que tienen un comportamiento más robusto?¿cuáles son sus característicsa?
+#- De todas las variables del dataset de entrada, cuáles son las más relevantes teniendo en cuenta los resultados de cada modelo.
+#- De todas las configuraciones de parámetros probadas para una misma arquitectura, seleccionar el subconjunto de las más prometedoras.
 
-Voy a acometer objetivos en primer lugar:
-- Dadas varias particiones del conjunto de entrenamiento, ¿qué partición tiene un comportamiento medio, cuál tiene el peor comportamiento y cuál el mejor?
-- Dados varios modelos de ML que solucionan el problema. ¿Cuáles son los 5 modelos que tienen un comportamiento más robusto?¿cuáles son sus característicsa?
-- De todas las variables del dataset de entrada, cuáles son las más relevantes teniendo en cuenta los resultados de cada modelo.
-- De todas las configuraciones de parámetros probadas para una misma arquitectura, seleccionar el subconjunto de las más prometedoras.
-- ...
-"""
 
 st.title("Análisis de comportamiento por partición (nFolds)")
 df=df_metrics
