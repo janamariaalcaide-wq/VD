@@ -218,7 +218,21 @@ top_models = (
 
 # Filtrar los datos para solo esos modelos
 df_top = df[df['Model'].isin(top_models['Model'])]
-
+st.markdown(
+    """
+    <style>
+    /* Cambiar el color de fondo del selectbox */
+    div[data-testid="stSelectbox"] {
+        background-color: #ffe6e6; /* color de fondo rojo claro */
+        border: 2px solid red; /* borde rojo */
+        border-radius: 5px;
+        padding: 5px;
+    }
+    /* También puedes personalizar el texto, bordes, etc. */
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 st.sidebar.title("Filtros")
 
 nvariables_options = sorted(df['Nvariables'].unique())
