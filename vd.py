@@ -219,26 +219,37 @@ top_models = (
 # Filtrar los datos para solo esos modelos
 df_top = df[df['Model'].isin(top_models['Model'])]
 
-# --- Mejoras en los selectores ---
 st.sidebar.title("Filtros")
 
-# Opciones únicas y ordenadas
-nvariables_options = sorted(df['Nvariables'].unique())
-nfolds_options = sorted(df['nFolds'].unique())
-seed_options = sorted(df['Seed'].unique())
+# Para cada filtro, primero un checkbox para activarlo
+filter_nvariables = st.sidebar.checkbox("Filtrar por NVariables")
+if filter_nvariables:
+    nvariables_options = sorted(df['Nvariables'].unique())
+    nvariables_filter = st.sidebar.multiselect(
+        'Selecciona NVariables', options=nvariables_options, default=nvariables_options
+    )
+else:
+    nvariables_filter = df['Nvariables'].unique()
 
-# Selectores con valores predeterminados
-nvariables_filter = st.sidebar.multiselect(
-    'NVariables', options=nvariables_options, default=nvariables_options
-)
-nfolds_filter = st.sidebar.multiselect(
-    'NFolds', options=nfolds_options, default=nfolds_options
-)
-seed_filter = st.sidebar.multiselect(
-    'Seed', options=seed_options, default=seed_options
-)
+filter_nfolds = st.sidebar.checkbox("Filtrar por NFolds")
+if filter_nfolds:
+    nfolds_options = sorted(df['nFolds'].unique())
+    nfolds_filter = st.sidebar.multiselect(
+        'Selecciona NFolds', options=nfolds_options, default=nfolds_options
+    )
+else:
+    nfolds_filter = df['nFolds'].unique()
 
-# --- Aplicar filtros ---
+filter_seed = st.sidebar.checkbox("Filtrar por Seed")
+if filter_seed:
+    seed_options = sorted(df['Seed'].unique())
+    seed_filter = st.sidebar.multiselect(
+        'Selecciona Seed', options=seed_options, default=seed_options
+    )
+else:
+    seed_filter = df['Seed'].unique()
+
+# Luego, aplicar los filtros
 filtered_df = df_top[
     (df_top['Nvariables'].isin(nvariables_filter)) &
     (df_top['nFolds'].isin(nfolds_filter)) &
