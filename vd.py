@@ -293,19 +293,18 @@ chart_combined = alt.layer(bars, lines, labels).resolve_scale(
     y='shared'
 ).properties(
     width=1000,
-    height=1000,
+    height=500,
     title='ROC_AUC medio por Seed con escala fija y líneas de referencia'
 )
 
-# Parte superior: dos columnas para el boxplot y el diagrama de burbujas
-col1, col2 = st.columns([1, 2])  # ajusta los ratios
 
-with col1:
+
+
     st.write("### ROC_AUC medio por Seed con línea de media global")
     # Inserta el código del gráfico aquí
     st.altair_chart(chart_combined, use_container_width=True)
 
-with col2:
+
     # Aquí tu diagrama de burbujas
     chart = alt.Chart(
         df
@@ -317,20 +316,8 @@ with col2:
         tooltip=['Model','ROC_AUC','Precision_macro','Recall_macro']
     ).properties(
         width=1000,
-        height=1000,
+        height=500,
         title='Modelos con métricas medias: Precisión vs Recall, tamaño por ROC_AUC'
     )
     st.altair_chart(chart, use_container_width=True)
 
-# Parte inferior: dos cuadros (puedes poner tus gráficos o información adicional)
-col3, col4 = st.columns(2)
-
-with col3:
-
-    # Puedes poner otro gráfico o datos aquí
-    st.write("Aquí puedes agregar otro gráfico o información.")
-
-with col4:
-    st.write("### Otra visualización o datos")
-    # Puedes poner otro gráfico o datos aquí
-    st.write("Aquí puedes agregar otro gráfico o información.")
