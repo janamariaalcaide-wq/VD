@@ -303,10 +303,7 @@ col1, col2 = st.columns([1, 2])  # ajusta los ratios
 with col1:
     st.write("### ROC_AUC medio por Seed con línea de media global")
     # Inserta el código del gráfico aquí
-    st.altair_chart(chart_combined, use_container_width=True).configure_view(
-    stroke=None,
-    padding=0  # eliminar márgenes internos
-)
+    st.altair_chart(chart_combined, use_container_width=True)
 
 with col2:
     # Aquí tu diagrama de burbujas
@@ -323,10 +320,7 @@ with col2:
         height=500,
         title='Modelos con métricas medias: Precisión vs Recall, tamaño por ROC_AUC'
     )
-    st.altair_chart(chart, use_container_width=True).configure_view(
-    stroke=None,
-    padding=0  # eliminar márgenes internos
-)
+    st.altair_chart(chart, use_container_width=True)
 
 # Parte inferior: dos cuadros (puedes poner tus gráficos o información adicional)
 col3, col4 = st.columns(2)
