@@ -267,14 +267,14 @@ lines_data = pd.DataFrame({
 # Gráfico de barras con colores diferentes
 bars = alt.Chart(roc_by_seed).mark_bar().encode(
     x=alt.X('Seed:N', title='Seed'),
-    y=alt.Y('ROC_AUC:Q', title='ROC_AUC medio', scale=alt.Scale(domain=[0.85, 1])),
+    y=alt.Y('ROC_AUC:Q', title='ROC_AUC medio', scale=alt.Scale(domain=[0.85, 0.94])),
     color=alt.Color('Seed:N', legend=None),  # Asigna un color diferente a cada seed
     tooltip=['Seed', 'ROC_AUC']
 )
 
 # Líneas horizontales para media, máximo y mínimo
 lines = alt.Chart(lines_data).mark_rule().encode(
-    y=alt.Y('value:Q', scale=alt.Scale(domain=[0.85, 1])),
+    y=alt.Y('value:Q', scale=alt.Scale(domain=[0.85, 0.94])),
     color=alt.Color('label:N', legend=None)
 )
 
