@@ -245,7 +245,12 @@ seed_filter = st.sidebar.multiselect(
     options=seed_options,
     default=seed_options
 )
-
+# Filtrar el DataFrame
+filtered_df = df_top[
+    (df_top['Nvariables'].isin(nvariables_filter)) &
+    (df_top['nFolds'].isin(nfolds_filter)) &
+    (df_top['Seed'].isin(seed_filter))
+]
 # --- Agrupar por modelo y calcular medias ---
 grouped_df = filtered_df.groupby('Model').agg({
     'Precision_macro': 'mean',
