@@ -258,7 +258,7 @@ lines_data = pd.DataFrame({
 # Gráfico de barras
 bars = alt.Chart(roc_by_seed).mark_bar().encode(
     x=alt.X('Seed:N', title='Seed'),
-    y=alt.Y('ROC_AUC:Q', title='ROC_AUC medio', scale=alt.Scale(domain=[0.7, 1])),
+    y=alt.Y('ROC_AUC:Q', title='ROC_AUC medio'),
     tooltip=['Seed', 'ROC_AUC']
 )
 
