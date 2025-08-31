@@ -250,8 +250,8 @@ df_top = df[
     (df['nFolds'].isin(nfolds_filter)) &
     (df['Seed'].isin(seed_filter))
 ]
-
-stats = df_top.groupby('Seed')['ROC_AUC'].agg(['mean', 'min', 'max']).reset_index()
+roc_by_seed = df_top.groupby('Seed')['ROC_AUC'].mean().reset_index()
+stats = roc_by_seed.agg(['mean', 'min', 'max']).reset_index()
 
 # Preparamos los datos para las líneas
 lines_data = pd.DataFrame({
