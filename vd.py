@@ -226,16 +226,25 @@ nfolds_options = sorted(df['nFolds'].unique())
 seed_options = sorted(df['Seed'].unique())
 
 # Crear filtros con multiselect
-nvariables_filter = st.sidebar.multiselect("Filtrar por NVariables", options=nvariables_options, default=nvariables_options)
-nfolds_filter = st.sidebar.multiselect("Filtrar por NFolds", options=nfolds_options, default=nfolds_options)
-seed_filter = st.sidebar.multiselect("Filtrar por Seed", options=seed_options, default=seed_options)
+# Filtro de Nvariables como selectbox
+nvariables_filter = st.sidebar.selectbox(
+    "Número de variables del modelo",
+    options=nvariables_options,
+    index=0  # Puedes poner el índice por defecto
+)
 
-# Aplicar los filtros
-filtered_df = df_top[
-    (df_top['Nvariables'].isin(nvariables_filter)) &
-    (df_top['nFolds'].isin(nfolds_filter)) &
-    (df_top['Seed'].isin(seed_filter))
-]
+# Otros filtros como multiselect, con un estilo más bonito (puedes usar un tema si quieres)
+nfolds_filter = st.sidebar.multiselect(
+    "Filtrar por NFolds",
+    options=nfolds_options,
+    default=nfolds_options
+)
+
+seed_filter = st.sidebar.multiselect(
+    "Filtrar por Seed",
+    options=seed_options,
+    default=seed_options
+)
 
 # --- Agrupar por modelo y calcular medias ---
 grouped_df = filtered_df.groupby('Model').agg({
@@ -251,7 +260,7 @@ grouped_df = filtered_df.groupby('Model').agg({
 chart = alt.Chart(grouped_df).mark_circle().encode(
     x=alt.X('Precision_macro', title='Precisión', scale=alt.Scale(domain=[0.7, 1])),
     y=alt.Y('Recall_macro', title='Recall', scale=alt.Scale(domain=[0.7, 1])),
-    size=alt.Size('ROC_AUC', title='ROC_AUC', scale=alt.Scale(range=[50, 100])),
+    size=alt.Size('ROC_AUC', title='ROC_AUC', scale=alt.Scale(range=[50, 300]), size_max=100),
     color=alt.Color('Model', legend=alt.Legend(title="Model")),
     tooltip=[
         'Model'
