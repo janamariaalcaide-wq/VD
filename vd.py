@@ -235,10 +235,6 @@ seed_filter = st.sidebar.multiselect(
     default=seed_options
 )
 
-
-# --- Selector para k (número de mejores modelos) ---
-k = st.slider('Selecciona los k mejores modelos a mostrar', min_value=1, max_value=10, value=5)
-
 # --- Filtrado ---
 df_top = df[
     (df['Nvariables'].isin(nvariables_filter)) &
@@ -246,48 +242,48 @@ df_top = df[
     (df['Seed'].isin(seed_filter))
 ]
 
-# --- Agrupar por Seed y calcular ROC_AUC medio ---
-roc_by_seed = df_top.groupby('Seed')['ROC_AUC'].mean().reset_index()
+roc_by_seed = df.groupby('Seed')['ROC_AUC'].mean().reset_index()
 
-# Calcular ROC_AUC medio global
-roc_mean = roc_by_seed['ROC_AUC'].mean()
+# Calculamos el valor medio global
+mean_roc = roc_by_seed['ROC_AUC'].mean()
 
-# Ordenar por ROC_AUC y seleccionar los top k
-roc_top_k = roc_by_seed.nlargest(k, 'ROC_AUC')
+# Gráfico de barras: ROC_AUC medio por seed
+bars = alt.Chart(roc_by_seed).mark_bar().encode(
+    x=alt.X('Seed:N', title='Seed'),
+    y=alt.Y('ROC_AUC:Q', title='ROC_AUC medio'),
+    tooltip=['Seed', 'ROC_AUC']
+).properties(
+    width=600,
+    height=400,
+    title='ROC_AUC medio por Seed'
+)
 
-# --- Layout ---
-st.markdown("## Visualización de métricas y modelos")
+# Línea con el valor medio global
+mean_line = alt.Chart(pd.DataFrame({'y': [mean_roc]})).mark_rule(color='red', strokeDash=[5,5]).encode(
+    y='y:Q'
+).properties(
+    title='Media global de ROC_AUC'
+)
 
+# Combinamos gráficos
+chart_combined = alt.layer(bars, mean_line).resolve_scale(
+    y='shared'
+)
+
+st.altair_chart(chart_combined, use_container_width=True)
+
+# Parte superior: dos columnas para el boxplot y el diagrama de burbujas
 col1, col2 = st.columns([1, 2])  # ajusta los ratios
 
 with col1:
-    st.write("### Distribución ROC_AUC por Seed (Barra)")
-    fig, ax = plt.subplots()
-    # Barras por seed
-    ax.bar(roc_by_seed['Seed'], roc_by_seed['ROC_AUC'])
-    # Línea con ROC medio
-    ax.axhline(roc_mean, color='red', linestyle='--', label=f'ROC medio: {roc_mean:.3f}')
-    ax.set_xlabel('Seed')
-    ax.set_ylabel('ROC_AUC')
-    ax.set_title('ROC_AUC promedio por Seed')
-    ax.legend()
-    st.pyplot(fig)
-    st.write("### Información adicional")
-    min_seed = roc_by_seed.loc[roc_by_seed['ROC_AUC'].idxmin(), 'Seed']
-    max_seed = roc_by_seed.loc[roc_by_seed['ROC_AUC'].idxmax(), 'Seed']
-    closest_seed = roc_by_seed.loc[(abs(roc_by_seed['ROC_AUC'] - roc_mean)).idxmin(), 'Seed']
-    mean_value = roc_by_seed['ROC_AUC'].mean()
-    st.write(f"Seed con mínimo ROC_AUC: {min_seed}")
-    st.write(f"Seed con máximo ROC_AUC: {max_seed}")
-    st.write(f"Seed más cercano al promedio: {closest_seed}")
-    st.write(f"Valor promedio de ROC_AUC: {mean_value:.3f}")
+    st.write("### ROC_AUC medio por Seed con línea de media global")
+    # Inserta el código del gráfico aquí
+    st.altair_chart(chart_combined, use_container_width=True)
 
 with col2:
-    # Diagrama de burbujas solo para los k mejores modelos
-    df_top_models = df[df['Model'].isin(roc_top_k['Seed'])]  # o ajusta si 'Model' es diferente
-    # Nota: quizás quieres filtrar por alguna métrica específica o por otra columna
+    # Aquí tu diagrama de burbujas
     chart = alt.Chart(
-        df_top_models
+        df
     ).mark_circle().encode(
         x=alt.X('Precision_macro', title='Precisión', scale=alt.Scale(domain=[0.7, 0.9])),
         y=alt.Y('Recall_macro', title='Recall', scale=alt.Scale(domain=[0.7, 0.9])),
@@ -297,6 +293,24 @@ with col2:
     ).properties(
         width=700,
         height=500,
-        title=f'Modelos con ROC_AUC entre los {k} mejores'
+        title='Modelos con métricas medias: Precisión vs Recall, tamaño por ROC_AUC'
     )
     st.altair_chart(chart, use_container_width=True)
+
+# Parte inferior: dos cuadros (puedes poner tus gráficos o información adicional)
+col3, col4 = st.columns(2)
+
+with col3:
+    st.write("### Información adicional 1")
+    st.write(f"Seed con mínimo ROC_AUC: {min_seed}")
+    st.write(f"Seed con máximo ROC_AUC: {max_seed}")
+    st.write(f"Seed más cercano al promedio: {closest_seed}")
+    st.write(f"Valor promedio de ROC_AUC: {mean_value:.3f}")
+    st.write("### Otra visualización o datos")
+    # Puedes poner otro gráfico o datos aquí
+    st.write("Aquí puedes agregar otro gráfico o información.")
+
+with col4:
+    st.write("### Otra visualización o datos")
+    # Puedes poner otro gráfico o datos aquí
+    st.write("Aquí puedes agregar otro gráfico o información.")
