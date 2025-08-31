@@ -205,64 +205,43 @@ df_leaderboard = renombrar_columnas(df_leaderboard, mapeo_metricas)
 #- De todas las configuraciones de parámetros probadas para una misma arquitectura, seleccionar el subconjunto de las más prometedoras.
 
 
-st.title("Análisis de comportamiento por partición (nFolds)")
-df=df_metrics
-
-nvariables_filter = st.multiselect(
-    "Número de variables (Nvariables)",
-    options=df['Nvariables'].unique(),
-    default=df['Nvariables'].unique()
+df = df_metrics
+# 1. Seleccionar los 5 mejores Modelos según ROC_AUC
+top_models = (
+    df.groupby('Model')['ROC_AUC']
+    .mean()
+    .reset_index()
+    .sort_values(by='ROC_AUC', ascending=False)
+    .head(5)
 )
 
-nfolds_filter = st.multiselect(
-    "Número de folds (nFolds)",
-    options=df['nFolds'].unique(),
-    default=df['nFolds'].unique()
-)
+# Filtrar los datos para solo esos modelos
+df_top = df[df['Model'].isin(top_models['Model'])]
 
-seed_filter = st.multiselect(
-    "Seed",
-    options=df['Seed'].unique(),
-    default=df['Seed'].unique()
-)
+# Crear filtros interactivos
+st.sidebar.title("Filtros")
+nvariables_filter = st.sidebar.multiselect('NVariables', options=df['Nvariables'].unique(), default=df['Nvariables'].unique())
+nfolds_filter = st.sidebar.multiselect('NFolds', options=df['nFolds'].unique(), default=df['nFolds'].unique())
+seed_filter = st.sidebar.multiselect('Seed', options=df['Seed'].unique(), default=df['Seed'].unique())
 
-# Filtrar el DataFrame según filtros seleccionados
-filtered_df = df[
-    (df['Nvariables'].isin(nvariables_filter)) &
-    (df['nFolds'].isin(nfolds_filter)) &
-    (df['Seed'].isin(seed_filter))
+# Aplicar filtros
+filtered_df = df_top[
+    (df_top['Nvariables'].isin(nvariables_filter)) &
+    (df_top['nFolds'].isin(nfolds_filter)) &
+    (df_top['Seed'].isin(seed_filter))
 ]
 
-# Agrupar por nFolds y calcular la media de la métrica que quieres analizar
-metric = 'ROC_AUC'  # Puedes cambiarla a otra métrica si quieres
-grouped = filtered_df.groupby('nFolds')[metric].mean().reset_index()
-
-# Identificar las particiones con mejor, peor y comportamiento medio
-best_fold = grouped.loc[grouped[metric].idxmax()]['nFolds']
-worst_fold = grouped.loc[grouped[metric].idxmin()]['nFolds']
-medium_value = grouped[metric].mean()
-
-# Clasificar cada partición según su comportamiento
-def classify_behavior(row):
-    if row['nFolds'] == best_fold:
-        return 'Mejor'
-    elif row['nFolds'] == worst_fold:
-        return 'Peor'
-    elif abs(row[metric] - medium_value) < 0.01:  # tolerancia para comportamiento medio
-        return 'Medio'
-    else:
-        return 'Otro'
-
-grouped['Comportamiento'] = grouped.apply(classify_behavior, axis=1)
-
-# Visualización con Altair
-chart = alt.Chart(grouped).mark_bar().encode(
-    x=alt.X('nFolds:O', title='Número de Folds'),
-    y=alt.Y(f'{metric}:Q', title=f'{metric} medio por nFolds'),
-    color=alt.Color('Comportamiento:N', title='Comportamiento'),
-    tooltip=['nFolds', metric, 'Comportamiento']
+# Crear la visualización de burbujas
+chart = alt.Chart(filtered_df).mark_circle().encode(
+    x=alt.X('Precision_macro', title='Precisión'),
+    y=alt.Y('Recall_macro', title='Recall'),
+    size=alt.Size('ROC_AUC', title='ROC_AUC', scale=alt.Scale(range=[0, 300])),
+    color=alt.Color('Model', legend=alt.Legend(title="Model")),
+    tooltip=['Model', 'Nvariables', 'nFolds', 'Seed', 'ROC_AUC', 'Precision_macro', 'Recall_macro']
 ).properties(
-    title='Comportamiento medio, peor y mejor por partición (nFolds)'
+    width=700,
+    height=500,
+    title='Top 5 Modelos por ROC_AUC: Burbujas (Precisión vs Recall, tamaño por ROC_AUC)'
 )
 
 st.altair_chart(chart, use_container_width=True)
