@@ -207,7 +207,16 @@ df_leaderboard = renombrar_columnas(df_leaderboard, mapeo_metricas)
 #- De todas las variables del dataset de entrada, cuáles son las más relevantes teniendo en cuenta los resultados de cada modelo.
 #- De todas las configuraciones de parámetros probadas para una misma arquitectura, seleccionar el subconjunto de las más prometedoras.
 
-
+st.markdown(
+    """
+    <style>
+    .streamlit-expander > div, .css-1l02zno { 
+        padding: 0 !important; 
+        margin: 0 !important;
+    }
+    </style>
+    """, unsafe_allow_html=True
+)
 # Supongo que ya tienes tu DataFrame df_metrics cargado
 df = df_metrics
 
@@ -258,14 +267,14 @@ lines_data = pd.DataFrame({
 # Gráfico de barras con colores diferentes
 bars = alt.Chart(roc_by_seed).mark_bar().encode(
     x=alt.X('Seed:N', title='Seed'),
-    y=alt.Y('ROC_AUC:Q', title='ROC_AUC medio', scale=alt.Scale(domain=[0.7, 1])),
+    y=alt.Y('ROC_AUC:Q', title='ROC_AUC medio', scale=alt.Scale(domain=[0.85, 1])),
     color=alt.Color('Seed:N', legend=None),  # Asigna un color diferente a cada seed
     tooltip=['Seed', 'ROC_AUC']
 )
 
 # Líneas horizontales para media, máximo y mínimo
 lines = alt.Chart(lines_data).mark_rule().encode(
-    y=alt.Y('value:Q', scale=alt.Scale(domain=[0.7, 1])),
+    y=alt.Y('value:Q', scale=alt.Scale(domain=[0.85, 1])),
     color=alt.Color('label:N', legend=None)
 )
 
@@ -294,7 +303,10 @@ col1, col2 = st.columns([1, 2])  # ajusta los ratios
 with col1:
     st.write("### ROC_AUC medio por Seed con línea de media global")
     # Inserta el código del gráfico aquí
-    st.altair_chart(chart_combined, use_container_width=True)
+    st.altair_chart(chart_combined, use_container_width=True).configure_view(
+    stroke=None,
+    padding=0  # eliminar márgenes internos
+)
 
 with col2:
     # Aquí tu diagrama de burbujas
@@ -311,7 +323,10 @@ with col2:
         height=500,
         title='Modelos con métricas medias: Precisión vs Recall, tamaño por ROC_AUC'
     )
-    st.altair_chart(chart, use_container_width=True)
+    st.altair_chart(chart, use_container_width=True).configure_view(
+    stroke=None,
+    padding=0  # eliminar márgenes internos
+)
 
 # Parte inferior: dos cuadros (puedes poner tus gráficos o información adicional)
 col3, col4 = st.columns(2)
