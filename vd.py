@@ -293,9 +293,35 @@ chart = chart.encode(
 st.title("Análisis de ROC AUC por Seed")
 st.altair_chart(chart, use_container_width=True)
 
+model_stats = df_top.groupby('Model').agg({
+    'ROC_AUC': 'mean',
+    'Precision_macro': 'mean',  # si quieres la media de otras métricas también
+    'Recall_macro': 'mean'
+}).reset_index()
+
+# Selecciona cuántos modelos quieres mostrar con slider
+k = st.slider('Número de mejores modelos a mostrar', min_value=1, max_value=len(model_stats), value=5)
+
+# Selecciona los K mejores modelos según media de ROC_AUC
+top_models = model_stats.nlargest(k, 'ROC_AUC')
+
+# Opcional: permitir seleccionar modelos específicos si quieres
+model_options = top_models['Model']
+selected_models = st.multiselect(
+    'Selecciona los modelos a incluir',
+    options=model_options,
+    default=model_options.tolist()
+)
+
+# Ahora, filtra el DataFrame original para incluir solo los modelos seleccionados
+filtered_df = df_top[df_top['Model'].isin(selected_models)]
+
+
+
+
 # Aquí tu diagrama de burbujas
 chart = alt.Chart(
-    df_top
+    filtered_df
 ).mark_circle().encode(
     x=alt.X('Precision_macro', title='Precisión', scale=alt.Scale(domain=[0.7, 0.9])),
     y=alt.Y('Recall_macro', title='Recall', scale=alt.Scale(domain=[0.7, 0.9])),
