@@ -259,7 +259,7 @@ grouped_df = filtered_df.groupby('Model').agg({
 chart = alt.Chart(grouped_df).mark_circle().encode(
     x=alt.X('Precision_macro', title='Precisión'),
     y=alt.Y('Recall_macro', title='Recall'),
-    size=alt.Size('ROC_AUC', title='ROC_AUC', scale=alt.Scale(range=[0, 300])),
+    size=alt.Size('ROC_AUC', title='ROC_AUC', scale=alt.Scale(range=[0, 100])),
     color=alt.Color('Model', legend=alt.Legend(title="Model")),
     tooltip=[
         'Model',
