@@ -19,14 +19,8 @@ from sklearn.metrics import (
     precision_score, recall_score, f1_score,
     roc_auc_score, average_precision_score, log_loss
 )
+import Altair as Alt
 
-"""# Preprocesado y Análisis"""
-
-
-import re
-import glob
-import os
-import pandas as pd
 
 def cargar_archivos(patron, columna_nvariables=True, columna_nfolds=True, columna_fold=True):
     archivos = glob.glob(patron)
@@ -152,20 +146,6 @@ df_leaderboard = reordenar_columnas(df_leaderboard)
 df_feature_importance = reordenar_columnas(df_feature_importance)
 df_metrics = reordenar_columnas(df_metrics)
 
-df_feature_importance.info()
-
-df_metrics.info()
-
-df_feature_importance.head()
-
-df_metrics.head()
-
-df_testpredcv.head()
-
-df_leaderboard.head()
-
-df_leaderboard.info()
-
 # Creo un diccionario para homogenerizar nombres de df_metrics y df_leader board
 mapeo_metricas = {
     # Métricas de precisión
@@ -216,109 +196,6 @@ def renombrar_columnas(df, mapeo):
 df_metrics = renombrar_columnas(df_metrics, mapeo_metricas)
 df_leaderboard = renombrar_columnas(df_leaderboard, mapeo_metricas)
 
-df=df_testpredcv
-
-#Voy a calcular las métricas a partir del detalle del resultado del OOF
-resultados_list = []
-
-claves_unicas = df[['Model', 'Nvariables', 'nFolds', 'Seed']].drop_duplicates()
-
-for _, fila_clave in claves_unicas.iterrows():
-    filtro = (
-        (df['Model'] == fila_clave['Model']) &
-        (df['Nvariables'] == fila_clave['Nvariables']) &
-        (df['nFolds'] == fila_clave['nFolds']) &
-        (df['Seed'] == fila_clave['Seed'])
-    )
-    df_grupo = df[filtro]
-
-    y_true = df_grupo['clasereal']
-    y_proba = df_grupo['testPredProba']
-    preds_binarios = (y_proba >= 0.5).astype(int)
-
-    # Verificar si hay solo dos clases para métricas binarias
-    clases_unicas_true = np.unique(y_true)
-    es_binario = len(clases_unicas_true) == 2
-
-    # Calcular métricas con manejo de errores y diferentes nombres
-    resultados = {
-        'Model': fila_clave['Model'],
-        'Nvariables': fila_clave['Nvariables'],
-        'nFolds': fila_clave['nFolds'],
-        'Seed': fila_clave['Seed'],
-        'Balanced_accuracy': None,
-        'Precision_macro': None,
-        'Precision_micro': None,
-        'Precision_weighted': None,
-        'Recall_macro': None,
-        'Recall_micro': None,
-        'Recall_weighted': None,
-        'F1_weighted': None,
-        'F1_macro': None,
-        'Roc_auc': None,
-        'PR_auc': None,
-        'Log_loss': None
-    }
-
-    try:
-        resultados['Balanced_accuracy'] = (preds_binarios == y_true).mean()
-    except:
-        resultados['Balanced_accuracy'] = np.nan
-
-    if es_binario:
-        try:
-            resultados['Precision_macro'] = precision_score(y_true, preds_binarios, average='macro', zero_division=0)
-            resultados['Recall_macro'] = recall_score(y_true, preds_binarios, average='macro', zero_division=0)
-            resultados['F1_macro'] = f1_score(y_true, preds_binarios, zero_division=0, average='macro')
-            resultados['Precision_micro'] = precision_score(y_true, preds_binarios, average='micro', zero_division=0)
-            resultados['Recall_micro'] = recall_score(y_true, preds_binarios, average='micro', zero_division=0)
-            resultados['F1_weighted'] = f1_score(y_true, preds_binarios, average='weighted', zero_division=0)
-            resultados['Recall_weighted'] = recall_score(y_true, preds_binarios, average='weighted', zero_division=0)
-            resultados['ROC_AUC'] = roc_auc_score(y_true, y_proba)
-            resultados['PR_auc'] = average_precision_score(y_true, y_proba)
-        except:
-            resultados['Precision_macro'] = np.nan
-            resultados['Recall_macro'] = np.nan
-            resultados['F1_macro'] = np.nan
-            resultados['Precision_micro'] = np.nan
-            resultados['Recall_micro'] = np.nan
-            resultados['F1_weighted'] = np.nan
-            resultados['Recall_weighted'] = np.nan
-            resultados['ROC_AUC'] = np.nan
-            resultados['PR_auc'] = np.nan
-    else:
-        resultados['ROC_AUC'] = np.nan
-        resultados['PR_auc'] = np.nan
-
-    try:
-        resultados['Log_loss'] = log_loss(y_true, np.clip(y_proba, 1e-15, 1 - 1e-15))
-    except:
-        resultados['Log_loss'] = np.nan
-
-    resultados_list.append(resultados)
-
-resultados_df = pd.DataFrame(resultados_list)
-
-print(resultados_df)
-
-ruta = '/content/drive/My Drive/VD/resultados.csv'
-# lo persisto para no calcularlo siempre
-resultados_df.to_csv(ruta, index=False)
-
-df_oofmetris=resultados_df
-df_oofmetris.head()
-
-filtro = (
-    (df_metrics['Model'] == 'CatBoost') &
-    (df_metrics['Nvariables'] == 8) &
-    (df_metrics['nFolds'] == 5) &
-    (df_metrics['Seed'] == 0)
-)
-
-df_filtrado = df_metrics.loc[filtro]
-print(df_filtrado)
-
-df_metrics.head()
 
 """# Presentación
 
@@ -391,5 +268,3 @@ chart = alt.Chart(grouped).mark_bar().encode(
 )
 
 st.altair_chart(chart, use_container_width=True)
-
-"""[texto del enlace](https://)# Nueva sección"""
