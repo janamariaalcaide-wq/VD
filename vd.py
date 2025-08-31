@@ -221,14 +221,14 @@ df_top = df[df['Model'].isin(top_models['Model'])]
 st.markdown(
     """
     <style>
-    /* Cambiar el color de fondo del selectbox */
+    /* Cambiar el color de fondo y borde del selectbox a tonos azules */
     div[data-testid="stSelectbox"] {
-        background-color: #ffe6e6; /* color de fondo rojo claro */
-        border: 2px solid red; /* borde rojo */
+        background-color: #d0e7ff; /* azul claro */
+        border: 2px solid #3399ff; /* azul medio */
         border-radius: 5px;
         padding: 5px;
     }
-    /* También puedes personalizar el texto, bordes, etc. */
+    /* Opcional: cambiar el color del texto o el hover */
     </style>
     """,
     unsafe_allow_html=True
@@ -279,7 +279,7 @@ grouped_df = filtered_df.groupby('Model').agg({
 chart = alt.Chart(grouped_df).mark_circle().encode(
     x=alt.X('Precision_macro', title='Precisión', scale=alt.Scale(domain=[0.7, 1])),
     y=alt.Y('Recall_macro', title='Recall', scale=alt.Scale(domain=[0.7, 1])),
-    size=alt.Size('ROC_AUC', title='ROC_AUC', scale=alt.Scale(range=[50, 100])),
+    size=alt.Size('ROC_AUC', title='ROC_AUC', scale=alt.Scale(range=[200, 500])),
     color=alt.Color('Model', legend=alt.Legend(title="Model")),
     tooltip=['Model']
 ).properties(
