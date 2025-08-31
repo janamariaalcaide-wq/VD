@@ -208,7 +208,6 @@ df_leaderboard = renombrar_columnas(df_leaderboard, mapeo_metricas)
 
 
 df = df_metrics
-# 1. Seleccionar los 5 mejores Modelos según ROC_AUC
 top_models = (
     df.groupby('Model')['ROC_AUC']
     .mean()
@@ -220,30 +219,61 @@ top_models = (
 # Filtrar los datos para solo esos modelos
 df_top = df[df['Model'].isin(top_models['Model'])]
 
-# Crear filtros interactivos
+# --- Mejoras en los selectores ---
 st.sidebar.title("Filtros")
-nvariables_filter = st.sidebar.multiselect('NVariables', options=df['Nvariables'].unique(), default=df['Nvariables'].unique())
-nfolds_filter = st.sidebar.multiselect('NFolds', options=df['nFolds'].unique(), default=df['nFolds'].unique())
-seed_filter = st.sidebar.multiselect('Seed', options=df['Seed'].unique(), default=df['Seed'].unique())
 
-# Aplicar filtros
+# Opciones únicas y ordenadas
+nvariables_options = sorted(df['Nvariables'].unique())
+nfolds_options = sorted(df['nFolds'].unique())
+seed_options = sorted(df['Seed'].unique())
+
+# Selectores con valores predeterminados
+nvariables_filter = st.sidebar.multiselect(
+    'NVariables', options=nvariables_options, default=nvariables_options
+)
+nfolds_filter = st.sidebar.multiselect(
+    'NFolds', options=nfolds_options, default=nfolds_options
+)
+seed_filter = st.sidebar.multiselect(
+    'Seed', options=seed_options, default=seed_options
+)
+
+# --- Aplicar filtros ---
 filtered_df = df_top[
     (df_top['Nvariables'].isin(nvariables_filter)) &
     (df_top['nFolds'].isin(nfolds_filter)) &
     (df_top['Seed'].isin(seed_filter))
 ]
 
-# Crear la visualización de burbujas
-chart = alt.Chart(filtered_df).mark_circle().encode(
+# --- Agrupar por modelo y calcular medias ---
+grouped_df = filtered_df.groupby('Model').agg({
+    'Precision_macro': 'mean',
+    'Recall_macro': 'mean',
+    'ROC_AUC': 'mean',
+    'Nvariables': 'mean',
+    'nFolds': 'mean',
+    'Seed': 'mean'
+}).reset_index()
+
+# --- Crear la visualización ---
+chart = alt.Chart(grouped_df).mark_circle().encode(
     x=alt.X('Precision_macro', title='Precisión'),
     y=alt.Y('Recall_macro', title='Recall'),
     size=alt.Size('ROC_AUC', title='ROC_AUC', scale=alt.Scale(range=[0, 300])),
     color=alt.Color('Model', legend=alt.Legend(title="Model")),
-    tooltip=['Model', 'Nvariables', 'nFolds', 'Seed', 'ROC_AUC', 'Precision_macro', 'Recall_macro']
+    tooltip=[
+        'Model',
+        'Nvariables',
+        'nFolds',
+        'Seed',
+        'ROC_AUC',
+        'Precision_macro',
+        'Recall_macro'
+    ]
 ).properties(
     width=700,
     height=500,
-    title='Top 5 Modelos por ROC_AUC: Burbujas (Precisión vs Recall, tamaño por ROC_AUC)'
+    title='Modelos con métricas medias: Precisión vs Recall, tamaño por ROC_AUC'
 )
 
 st.altair_chart(chart, use_container_width=True)
