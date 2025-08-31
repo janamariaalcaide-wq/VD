@@ -255,40 +255,38 @@ lines_data = pd.DataFrame({
     'label': ['Media', 'Máximo', 'Mínimo']
 })
 
-# Gráfico de barras
+# Gráfico de barras con colores diferentes
 bars = alt.Chart(roc_by_seed).mark_bar().encode(
     x=alt.X('Seed:N', title='Seed'),
-    y=alt.Y('ROC_AUC:Q', title='ROC_AUC medio'),
+    y=alt.Y('ROC_AUC:Q', title='ROC_AUC medio', scale=alt.Scale(domain=[0.7, 1])),
+    color=alt.Color('Seed:N', legend=None),  # Asigna un color diferente a cada seed
     tooltip=['Seed', 'ROC_AUC']
 )
 
-# Líneas para media, máximo y mínimo
+# Líneas horizontales para media, máximo y mínimo
 lines = alt.Chart(lines_data).mark_rule().encode(
-    y='value:Q',
-    color=alt.Color('label:N', legend=None),
-    strokeDash=alt.condition(
-        alt.datum.label == 'Media', alt.value([5,5]),
-        alt.value([1,0])  # línea sólida para max y min
-    )
-).properties(
-    width=600,
-    height=400
-).transform_filter(
-    alt.FieldOneOfPredicate(field='label', oneOf=['Media', 'Máximo', 'Mínimo'])
+    y=alt.Y('value:Q', scale=alt.Scale(domain=[0.7, 1])),
+    color=alt.Color('label:N', legend=None)
 )
 
-# Añadimos texto para las líneas
-texts = alt.Chart(lines_data).mark_text(
+# Añadimos etiquetas para las líneas
+labels = alt.Chart(lines_data).mark_text(
     align='left',
     dx=5,
-    dy=-5
+    dy=3
 ).encode(
     y='value:Q',
     text='label:N'
 )
 
 # Combinamos todo
-chart_combined = alt.layer(bars, lines, texts).resolve_scale(
+chart_combined = alt.layer(bars, lines, labels).resolve_scale(
+    y='shared'
+).properties(
+    width=600,
+    height=400,
+    title='ROC_AUC medio por Seed con escala fija y líneas de referencia'
+)
     y='shared'
 )
 
