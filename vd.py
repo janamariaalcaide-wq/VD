@@ -357,7 +357,7 @@ chart_vars = alt.Chart(avg_by_vars).mark_bar().encode(
 ).properties(
     title='Media de ROC_AUC por Número de Variables'
 )
-
+st.altair_chart(chart_vars, use_container_width=True)
 # Gráfico de barras para número de folds
 chart_folds = alt.Chart(avg_by_folds).mark_bar().encode(
     x=alt.X('nFolds:N', title='Número de Folds'),
@@ -367,7 +367,7 @@ chart_folds = alt.Chart(avg_by_folds).mark_bar().encode(
 ).properties(
     title='Media de ROC_AUC por Número de Folds'
 )
-
+st.altair_chart(chart_folds, use_container_width=True)
 df_filtered = df_feature_importance[
     (df_feature_importance['Nvariables'].isin(nvariables_filter)) &
     (df_feature_importance['nFolds'].isin(nfolds_filter)) &
