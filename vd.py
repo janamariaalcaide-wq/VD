@@ -90,10 +90,7 @@ df_feature_importance = cargar_archivos(patron_feature_importance, columna_nvari
 patron_metrics = "DATOS/Metrics_CV_ID_2C_NvsSD_nR0_nV*_nF*_Seed*.csv"
 df_metrics = cargar_archivos(patron_metrics, columna_nvariables=True,columna_nfolds=True)
 
-df_leaderboard = df_leaderboard[df_leaderboard['Model'].str.startswith('CatBoost')]
-df_testpredcv = df_testpredcv_prev[df_testpredcv_prev['Model'].str.startswith('CatBoost')]
-df_feature_importance = df_feature_importance[df_feature_importance['Model'].str.startswith('CatBoost')]
-df_metrics = df_metrics[df_metrics['Model'].str.startswith('CatBoost')]
+
 
 
 
@@ -206,7 +203,10 @@ def renombrar_columnas(df, mapeo):
 df_metrics = renombrar_columnas(df_metrics, mapeo_metricas)
 df_leaderboard = renombrar_columnas(df_leaderboard, mapeo_metricas)
 
-
+df_leaderboard = df_leaderboard[df_leaderboard['Model'].str.startswith('CatBoost')]
+df_testpredcv = df_testpredcv_prev[df_testpredcv_prev['Model'].str.startswith('CatBoost')]
+df_feature_importance = df_feature_importance[df_feature_importance['Model'].str.startswith('CatBoost')]
+df_metrics = df_metrics[df_metrics['Model'].str.startswith('CatBoost')]
 #""" Presentación
 #Voy a acometer objetivos en primer lugar:
 #- Dadas varias particiones del conjunto de entrenamiento, ¿qué partición tiene un comportamiento medio, cuál tiene el peor comportamiento y cuál el mejor?
