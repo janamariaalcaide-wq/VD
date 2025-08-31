@@ -247,7 +247,7 @@ seed_filter = st.sidebar.multiselect(
 )
 # Filtrar el DataFrame
 filtered_df = df_top[
-    (df_top['Nvariables'].isin(nvariables_filter)) &
+    (df_top['Nvariables'].isin([nvariables_filter])) &
     (df_top['nFolds'].isin(nfolds_filter)) &
     (df_top['Seed'].isin(seed_filter))
 ]
