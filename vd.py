@@ -220,7 +220,7 @@ seed_options = sorted(df['Seed'].unique())
 nvariables_filter = st.sidebar.multiselect(
     "Número de variables del modelo",
     options=nvariables_options,
-    options=nvariables_options
+    default=nvariables_options
 )
 
 nfolds_filter = st.sidebar.multiselect(
