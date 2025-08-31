@@ -147,17 +147,19 @@ df_feature_importance = reordenar_columnas(df_feature_importance)
 df_metrics = reordenar_columnas(df_metrics)
 
 # Creo un diccionario para homogenerizar nombres de df_metrics y df_leader board
+# Creo un diccionario para homogenerizar nombres de df_metrics y df_leader board
 mapeo_metricas = {
     # Métricas de precisión
     'precision_macro': 'Precision',
-    'Precision_macro': 'Precision',
+    'Precision_macro': 'Precision_macro',
     'precision': 'Precision',
-    'Precision_weighted': 'Precision',
+    'Precision_weighted': 'Precision_weighted',
+    'average_precision': 'average_precision',
     'Precision_0': 'Precision_0',
     'Precision_1': 'Precision_1',
     # Métricas de recall
-    'recall_macro': 'Recall',
-    'Recall_macro': 'Recall',
+    'recall_macro': 'Recall_macro',
+    'Recall_macro': 'Recall_macro',
     'recall': 'Recall',
     'Recall_weighted': 'Recall_Weighted',
     'Recall_0': 'Recall_0',
@@ -174,11 +176,11 @@ mapeo_metricas = {
     'Roc_auc': 'ROC_AUC',
     'auc': 'ROC_AUC',
     'pr_auc': 'PR_AUC',
-    'average_precision': 'PR_AUC',
     'score_test': 'Score_Test',
     'score_val': 'Score_Validation',
     'log_loss': 'Log_Loss',
 }
+
 def renombrar_columnas(df, mapeo):
     columnas_actuales = df.columns
     nuevas_columnas = {}
