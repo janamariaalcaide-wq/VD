@@ -290,8 +290,8 @@ labels = alt.Chart(lines_data).mark_text(
 chart_combined = alt.layer(bars, lines, labels).resolve_scale(
     y='shared'
 ).properties(
-    width=400,
-    height=600,
+    width=500,
+    height=700,
     title='ROC_AUC medio por Seed con escala fija y líneas de referencia'
 )
 
