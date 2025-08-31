@@ -300,24 +300,24 @@ chart_combined = alt.layer(bars, lines, labels).resolve_scale(
 
 
 
-    st.write("### ROC_AUC medio por Seed con línea de media global")
-    # Inserta el código del gráfico aquí
-    st.altair_chart(chart_combined, use_container_width=True)
+st.write("### ROC_AUC medio por Seed con línea de media global")
+# Inserta el código del gráfico aquí
+st.altair_chart(chart_combined, use_container_width=True)
 
 
-    # Aquí tu diagrama de burbujas
-    chart = alt.Chart(
-        df
-    ).mark_circle().encode(
-        x=alt.X('Precision_macro', title='Precisión', scale=alt.Scale(domain=[0.7, 0.9])),
-        y=alt.Y('Recall_macro', title='Recall', scale=alt.Scale(domain=[0.7, 0.9])),
-        size=alt.Size('ROC_AUC', title='ROC_AUC', scale=alt.Scale(range=[400, 1000])),
-        color=alt.Color('Model', legend=alt.Legend(title="Model")),
-        tooltip=['Model','ROC_AUC','Precision_macro','Recall_macro']
-    ).properties(
-        width=1000,
-        height=500,
-        title='Modelos con métricas medias: Precisión vs Recall, tamaño por ROC_AUC'
-    )
-    st.altair_chart(chart, use_container_width=True)
+# Aquí tu diagrama de burbujas
+chart = alt.Chart(
+    df
+).mark_circle().encode(
+    x=alt.X('Precision_macro', title='Precisión', scale=alt.Scale(domain=[0.7, 0.9])),
+    y=alt.Y('Recall_macro', title='Recall', scale=alt.Scale(domain=[0.7, 0.9])),
+    size=alt.Size('ROC_AUC', title='ROC_AUC', scale=alt.Scale(range=[400, 1000])),
+    color=alt.Color('Model', legend=alt.Legend(title="Model")),
+    tooltip=['Model','ROC_AUC','Precision_macro','Recall_macro']
+).properties(
+    width=1000,
+    height=500,
+    title='Modelos con métricas medias: Precisión vs Recall, tamaño por ROC_AUC'
+)
+st.altair_chart(chart, use_container_width=True)
 
