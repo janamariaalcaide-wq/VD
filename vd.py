@@ -251,61 +251,54 @@ df_top = df[
     (df['Seed'].isin(seed_filter))
 ]
 
-roc_by_seed = df.groupby('Seed')['ROC_AUC'].mean().reset_index()
+stats = df_top.groupby('Seed')['ROC_AUC'].agg(['mean', 'min', 'max']).reset_index()
 
-# Calculamos el valor medio, máximo y mínimo
-mean_roc = roc_by_seed['ROC_AUC'].mean()
-max_roc = roc_by_seed['ROC_AUC'].max()
-min_roc = roc_by_seed['ROC_AUC'].min()
-
-# Datos para las líneas
+# Preparamos los datos para las líneas
 lines_data = pd.DataFrame({
-    'value': [mean_roc, max_roc, min_roc],
-    'label': ['Media', 'Máximo', 'Mínimo']
+    'Seed': list(stats['Seed']) * 3,
+    'value': list(stats['mean']) + list(stats['min']) + list(stats['max']),
+    'label': ['mean']]*len(stats) + ['min']*len(stats) + ['max']*len(stats)
 })
 
+# Gráfico de barras: media de ROC_AUC por seed
 bars = alt.Chart(roc_by_seed).mark_bar().encode(
     x=alt.X('Seed:N', title='Seed', axis=alt.Axis(labelAngle=45)),
     y=alt.Y('ROC_AUC:Q', title='ROC_AUC medio', scale=alt.Scale(domain=[0.85, 0.94])),
     color=alt.Color('Seed:N', legend=None),
     tooltip=['Seed', 'ROC_AUC']
+).properties(
+    width=600,
+    height=400,
+    title='ROC_AUC medio por Seed con líneas de referencia'
 )
 
+# Líneas horizontales para media, mínimo y máximo
 lines = alt.Chart(lines_data).mark_rule().encode(
-    x=alt.X('Seed:N', title='Seed', axis=alt.Axis(labelAngle=45)),
+    x=alt.X('Seed:N', axis=None),
     y=alt.Y('value:Q', scale=alt.Scale(domain=[0.85, 0.94])),
-    color=alt.Color('label:N', legend=None)
+    color=alt.Color('label:N', legend=None),
+    strokeDash=alt.StrokeDash('label:N', legend=None)
 )
 
+# Añadimos etiquetas a las líneas (opcional)
 labels = alt.Chart(lines_data).mark_text(
     align='left',
     dx=5,
-    dy=3
+    dy=-5
 ).encode(
+    x=alt.X('Seed:N', axis=None),
     y='value:Q',
-    text='label:N',
-    x=alt.X('Seed:N', axis=None)  # Para posicionar las etiquetas en la misma categoría
+    text='label:N'
 )
+
 # Combinamos todo
-chart_combined = alt.layer(bars, lines, labels).resolve_scale(
+chart = alt.layer(bars, lines, labels).resolve_scale(
     y='shared'
-).properties(
-    width=500,
-    height=700,
-    title='ROC_AUC medio por Seed con escala fija y líneas de referencia'
 )
-
-
-
-
-st.write("### ROC_AUC medio por Seed con línea de media global")
-# Inserta el código del gráfico aquí
-st.altair_chart(chart_combined, use_container_width=True)
-
 
 # Aquí tu diagrama de burbujas
 chart = alt.Chart(
-    df
+    df_top
 ).mark_circle().encode(
     x=alt.X('Precision_macro', title='Precisión', scale=alt.Scale(domain=[0.7, 0.9])),
     y=alt.Y('Recall_macro', title='Recall', scale=alt.Scale(domain=[0.7, 0.9])),
