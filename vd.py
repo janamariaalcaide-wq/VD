@@ -207,47 +207,21 @@ df_leaderboard = renombrar_columnas(df_leaderboard, mapeo_metricas)
 #- De todas las configuraciones de parámetros probadas para una misma arquitectura, seleccionar el subconjunto de las más prometedoras.
 
 
+# Supongo que ya tienes tu DataFrame df_metrics cargado
 df = df_metrics
-top_models = (
-    df.groupby('Model')['ROC_AUC']
-    .mean()
-    .reset_index()
-    .sort_values(by='ROC_AUC', ascending=False)
-    .head(5)
-)
 
-# Filtrar los datos para solo esos modelos
-df_top = df[df['Model'].isin(top_models['Model'])]
-st.markdown(
-    """
-    <style>
-    /* Cambiar el color de fondo y borde del selectbox a tonos azules */
-    div[data-testid="stSelectbox"] {
-        background-color: #d0e7ff; /* azul claro */
-        border: 2px solid #3399ff; /* azul medio */
-        border-radius: 5px;
-        padding: 5px;
-    }
-    /* Opcional: cambiar el color del texto o el hover */
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+# --- Filtros en sidebar ---
 st.sidebar.title("Filtros")
-
 nvariables_options = sorted(df['Nvariables'].unique())
 nfolds_options = sorted(df['nFolds'].unique())
 seed_options = sorted(df['Seed'].unique())
 
-# Crear filtros con multiselect
-# Filtro de Nvariables como selectbox
 nvariables_filter = st.sidebar.selectbox(
     "Número de variables del modelo",
     options=nvariables_options,
-    index=0  # Puedes poner el índice por defecto
+    index=0
 )
 
-# Otros filtros como multiselect, con un estilo más bonito (puedes usar un tema si quieres)
 nfolds_filter = st.sidebar.multiselect(
     "Filtrar por NFolds",
     options=nfolds_options,
@@ -259,33 +233,70 @@ seed_filter = st.sidebar.multiselect(
     options=seed_options,
     default=seed_options
 )
-# Filtrar el DataFrame
-filtered_df = df_top[
-    (df_top['Nvariables'].isin([nvariables_filter])) &
-    (df_top['nFolds'].isin(nfolds_filter)) &
-    (df_top['Seed'].isin(seed_filter))
+
+# --- Filtrado ---
+df_top = df[
+    (df['Nvariables'] == nvariables_filter) &
+    (df['nFolds'].isin(nfolds_filter)) &
+    (df['Seed'].isin(seed_filter))
 ]
-# --- Agrupar por modelo y calcular medias ---
-grouped_df = filtered_df.groupby('Model').agg({
-    'Precision_macro': 'mean',
-    'Recall_macro': 'mean',
-    'ROC_AUC': 'mean',
-    'Nvariables': 'mean',
-    'nFolds': 'mean',
-    'Seed': 'mean'
-}).reset_index()
 
-# --- Crear la visualización ---
-chart = alt.Chart(grouped_df).mark_circle().encode(
-    x=alt.X('Precision_macro', title='Precisión', scale=alt.Scale(domain=[0.7, 0.9])),
-    y=alt.Y('Recall_macro', title='Recall', scale=alt.Scale(domain=[0.7, 0.9])),
-    size=alt.Size('ROC_AUC', title='ROC_AUC', scale=alt.Scale(range=[400, 1000])),
-    color=alt.Color('Model', legend=alt.Legend(title="Model")),
-    tooltip=['Model','ROC_AUC','Precision_macro','Recall_macro']
-).properties(
-    width=700,
-    height=500,
-    title='Modelos con métricas medias: Precisión vs Recall, tamaño por ROC_AUC'
-)
+# --- Agrupar y preparar datos para el boxplot ---
+# Agrupamos por Seed y calculamos ROC_AUC medio
+roc_by_seed = df.groupby('Seed')['ROC_AUC'].mean().reset_index()
 
-st.altair_chart(chart, use_container_width=True)
+# Valores mínimos, máximos y cercanos al promedio
+min_seed = roc_by_seed.loc[roc_by_seed['ROC_AUC'].idxmin(), 'Seed']
+max_seed = roc_by_seed.loc[roc_by_seed['ROC_AUC'].idxmax(), 'Seed']
+mean_value = roc_by_seed['ROC_AUC'].mean()
+roc_by_seed['diff_from_mean'] = abs(roc_by_seed['ROC_AUC'] - mean_value)
+closest_seed = roc_by_seed.loc[roc_by_seed['diff_from_mean'].idxmin(), 'Seed']
+
+# --- Layout ---
+# Divide la página en dos partes arriba y dos abajo
+st.markdown("## Visualización de métricas y modelos")
+
+# Parte superior: dos columnas para el boxplot y el diagrama de burbujas
+col1, col2 = st.columns([1, 2])  # ajusta los ratios
+
+with col1:
+    st.write("### Distribución ROC_AUC por Seed")
+    fig, ax = plt.subplots()
+    grouped = df.groupby('Seed')['ROC_AUC'].apply(list)
+    ax.boxplot(grouped, labels=grouped.index)
+    ax.set_xlabel('Seed')
+    ax.set_ylabel('ROC_AUC')
+    ax.set_title('Distribución de ROC_AUC por Seed')
+    st.pyplot(fig)
+
+with col2:
+    # Aquí tu diagrama de burbujas
+    chart = alt.Chart(
+        grouped_df
+    ).mark_circle().encode(
+        x=alt.X('Precision_macro', title='Precisión', scale=alt.Scale(domain=[0.7, 0.9])),
+        y=alt.Y('Recall_macro', title='Recall', scale=alt.Scale(domain=[0.7, 0.9])),
+        size=alt.Size('ROC_AUC', title='ROC_AUC', scale=alt.Scale(range=[400, 1000])),
+        color=alt.Color('Model', legend=alt.Legend(title="Model")),
+        tooltip=['Model','ROC_AUC','Precision_macro','Recall_macro']
+    ).properties(
+        width=700,
+        height=500,
+        title='Modelos con métricas medias: Precisión vs Recall, tamaño por ROC_AUC'
+    )
+    st.altair_chart(chart, use_container_width=True)
+
+# Parte inferior: dos cuadros (puedes poner tus gráficos o información adicional)
+col3, col4 = st.columns(2)
+
+with col3:
+    st.write("### Información adicional 1")
+    st.write(f"Seed con mínimo ROC_AUC: {min_seed}")
+    st.write(f"Seed con máximo ROC_AUC: {max_seed}")
+    st.write(f"Seed más cercano al promedio: {closest_seed}")
+    st.write(f"Valor promedio de ROC_AUC: {mean_value:.3f}")
+
+with col4:
+    st.write("### Otra visualización o datos")
+    # Puedes poner otro gráfico o datos aquí
+    st.write("Aquí puedes agregar otro gráfico o información.")
