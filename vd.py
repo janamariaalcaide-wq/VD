@@ -267,7 +267,7 @@ lines_data = pd.DataFrame({
 # Gráfico de barras con colores diferentes
 bars = alt.Chart(roc_by_seed).mark_bar().encode(
     x=alt.X('Seed:N', title='Seed'),
-    y=alt.Y('ROC_AUC:Q', title='ROC_AUC medio', scale=alt.Scale(domain=[0.85, 1])),
+    y=alt.Y('ROC_AUC:Q', title='ROC_AUC medio', scale=alt.Scale(domain=[0.7, 1])),
     color=alt.Color('Seed:N', legend=None),  # Asigna un color diferente a cada seed
     tooltip=['Seed', 'ROC_AUC']
 )
