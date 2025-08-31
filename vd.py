@@ -221,35 +221,16 @@ df_top = df[df['Model'].isin(top_models['Model'])]
 
 st.sidebar.title("Filtros")
 
-# Para cada filtro, primero un checkbox para activarlo
-filter_nvariables = st.sidebar.checkbox("Filtrar por NVariables")
-if filter_nvariables:
-    nvariables_options = sorted(df['Nvariables'].unique())
-    nvariables_filter = st.sidebar.multiselect(
-        'Selecciona NVariables', options=nvariables_options, default=nvariables_options
-    )
-else:
-    nvariables_filter = df['Nvariables'].unique()
+nvariables_options = sorted(df['Nvariables'].unique())
+nfolds_options = sorted(df['nFolds'].unique())
+seed_options = sorted(df['Seed'].unique())
 
-filter_nfolds = st.sidebar.checkbox("Filtrar por NFolds")
-if filter_nfolds:
-    nfolds_options = sorted(df['nFolds'].unique())
-    nfolds_filter = st.sidebar.multiselect(
-        'Selecciona NFolds', options=nfolds_options, default=nfolds_options
-    )
-else:
-    nfolds_filter = df['nFolds'].unique()
+# Crear filtros con multiselect
+nvariables_filter = st.sidebar.multiselect("Filtrar por NVariables", options=nvariables_options, default=nvariables_options)
+nfolds_filter = st.sidebar.multiselect("Filtrar por NFolds", options=nfolds_options, default=nfolds_options)
+seed_filter = st.sidebar.multiselect("Filtrar por Seed", options=seed_options, default=seed_options)
 
-filter_seed = st.sidebar.checkbox("Filtrar por Seed")
-if filter_seed:
-    seed_options = sorted(df['Seed'].unique())
-    seed_filter = st.sidebar.multiselect(
-        'Selecciona Seed', options=seed_options, default=seed_options
-    )
-else:
-    seed_filter = df['Seed'].unique()
-
-# Luego, aplicar los filtros
+# Aplicar los filtros
 filtered_df = df_top[
     (df_top['Nvariables'].isin(nvariables_filter)) &
     (df_top['nFolds'].isin(nfolds_filter)) &
@@ -268,18 +249,12 @@ grouped_df = filtered_df.groupby('Model').agg({
 
 # --- Crear la visualización ---
 chart = alt.Chart(grouped_df).mark_circle().encode(
-    x=alt.X('Precision_macro', title='Precisión'),
-    y=alt.Y('Recall_macro', title='Recall'),
+    x=alt.X('Precision_macro', title='Precisión', scale=alt.Scale(domain=[0.5, 1])),
+    y=alt.Y('Recall_macro', title='Recall', scale=alt.Scale(domain=[0.5, 1])),
     size=alt.Size('ROC_AUC', title='ROC_AUC', scale=alt.Scale(range=[0, 100])),
     color=alt.Color('Model', legend=alt.Legend(title="Model")),
     tooltip=[
-        'Model',
-        'Nvariables',
-        'nFolds',
-        'Seed',
-        'ROC_AUC',
-        'Precision_macro',
-        'Recall_macro'
+        'Model'
     ]
 ).properties(
     width=700,
