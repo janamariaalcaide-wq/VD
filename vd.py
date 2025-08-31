@@ -19,7 +19,7 @@ from sklearn.metrics import (
     precision_score, recall_score, f1_score,
     roc_auc_score, average_precision_score, log_loss
 )
-import Altair as Alt
+import altair as alt
 
 
 def cargar_archivos(patron, columna_nvariables=True, columna_nfolds=True, columna_fold=True):
