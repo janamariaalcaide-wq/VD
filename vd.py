@@ -265,7 +265,7 @@ grouped_df = filtered_df.groupby('Model').agg({
 chart = alt.Chart(grouped_df).mark_circle().encode(
     x=alt.X('Precision_macro', title='Precisión', scale=alt.Scale(domain=[0.7, 1])),
     y=alt.Y('Recall_macro', title='Recall', scale=alt.Scale(domain=[0.7, 1])),
-    size=alt.Size('ROC_AUC', title='ROC AUC', scale=alt.Scale(range=[100, 1000])),  # círculos más grandes
+    size=alt.Size('ROC_AUC', title='ROC AUC', scale=alt.Scale(range=[50, 200])),  # círculos más grandes
     color=alt.Color('Model', legend=alt.Legend(title="Model")),
     tooltip=[
         alt.Tooltip('Model'),
