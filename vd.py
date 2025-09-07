@@ -23,197 +23,10 @@ import altair as alt
 import matplotlib.pyplot as plt
 
 
-def cargar_archivos(patron, columna_nvariables=True, columna_nfolds=True, columna_fold=True):
-    archivos = glob.glob(patron)
-    dfs = []
-    pattern_nv = re.compile(r'nV(\d+)')
-    pattern_nf = re.compile(r'nF(\d+)')
-    pattern_s = re.compile(r'_S\d+')  # para eliminar '_S0', '_S1', etc.
-    pattern_seed = re.compile(r'Seed[_]?(\d+)')  # para extraer el número de Seed
-    pattern_fold = re.compile(r'_Fold(\d+)')  # nuevo patrón para Fold
-
-    for archivo in archivos:
-        df = pd.read_csv(archivo)
-        nombre_archivo = os.path.basename(archivo)
-
-        # Añadir columna Nvariables
-        if columna_nvariables:
-            match_nv = pattern_nv.search(archivo)
-            if match_nv:
-                n_variables = int(match_nv.group(1))
-            else:
-                n_variables = None
-            df['Nvariables'] = n_variables
-
-        # Añadir columna nFolds
-        if columna_nfolds:
-            match_nf = pattern_nf.search(archivo)
-            if match_nf:
-                n_folds = int(match_nf.group(1))
-            else:
-                n_folds = None
-            df['nFolds'] = n_folds
-
-        # Añadir columna Fold (si se especifica y si en el nombre aparece)
-        if columna_fold:
-            match_fold = pattern_fold.search(nombre_archivo)
-            if match_fold:
-                fold_value = int(match_fold.group(1))
-            else:
-                fold_value = None
-            df['Fold'] = fold_value
-
-        # Si el archivo empieza por 'TestPredCV', eliminar '_S*_'
-        if nombre_archivo.startswith('TestPredCV'):
-            df.columns = [pattern_s.sub('', col) for col in df.columns]
-
-        # Si en el nombre del archivo aparece 'Seed', extraer el valor
-        match_seed = pattern_seed.search(nombre_archivo)
-        if 'Seed' in nombre_archivo and match_seed:
-            seed_value = int(match_seed.group(1))
-            df['Seed'] = seed_value
-
-        dfs.append(df)
-
-    df_total = pd.concat(dfs, ignore_index=True)
-    return df_total
-
-patron_testpredcv = "DATOS/TestPredCV_ID_2C_NvsSD_nR0_nV*_nF*_Seed*.csv"
-df_testpredcv_prev = cargar_archivos(patron_testpredcv, columna_nvariables=True,columna_nfolds=True)
-
-patron_leaderboard = "DATOS/leaderboard_testset_ID_2C_NvsSD_nR0_nV*_nF*_Seed*_Fold*.csv"
-df_leaderboard = cargar_archivos(patron_leaderboard, columna_nvariables=True,columna_nfolds=True)
-
-patron_feature_importance = "DATOS/FeatureImportance_ID_2C_NvsSD_nR0_nV*_nF*.csv"
-df_feature_importance = cargar_archivos(patron_feature_importance, columna_nvariables=True,columna_nfolds=True)
-
-patron_metrics = "DATOS/Metrics_CV_ID_2C_NvsSD_nR0_nV*_nF*_Seed*.csv"
-df_metrics = cargar_archivos(patron_metrics, columna_nvariables=True,columna_nfolds=True)
-
-
-
-
-
-#Pivoto df_testpredcv que tiene los valores para modelos en columnas
-def extraer_modelos(df):
-    modelos = set()
-    for col in df.columns:
-        match_numfold = re.match(r'testNumFold_(\w+)', col)
-        match_proba = re.match(r'testPredProba_(\w+)', col)
-        if match_numfold:
-            modelos.add(match_numfold.group(1))
-        elif match_proba:
-            modelos.add(match_proba.group(1))
-    return sorted(modelos)
-
-modelos = extraer_modelos(df_testpredcv_prev)
-filas_transformadas = []
-for _, fila in df_testpredcv_prev.iterrows():
-    base_info = {
-        'Nvariables': fila['Nvariables'],
-        'nFolds': fila['nFolds'],
-        'Seed': fila['Seed'],
-        'etiq-id': fila['etiq-id'],
-        'clasereal': fila['ED_2Clases']
-    }
-    for modelo in modelos:
-        fila_modelo = base_info.copy()
-        fila_modelo['model'] = modelo
-        test_numfold_col = f'testNumFold_{modelo}'
-        test_proba_col = f'testPredProba_{modelo}'
-        fila_modelo['testNumFold'] = fila[test_numfold_col] if test_numfold_col in df_testpredcv_prev.columns else None
-        fila_modelo['testPredProba'] = fila[test_proba_col] if test_proba_col in df_testpredcv_prev.columns else None
-        filas_transformadas.append(fila_modelo)
-df_testpredcv = pd.DataFrame(filas_transformadas)
-
-#voy a ordenar las tablas para poner las claves primero
-def reordenar_columnas(df):
-    df.columns = [
-        'Seed' if col.lower() == 'seed' else col
-        for col in df.columns
-    ]
-    df.columns = [
-        'model' if re.search(r'modelname', col, re.IGNORECASE) else col
-        for col in df.columns
-    ]
-    df.columns = [
-        'Model' if col.lower() == 'model' else col
-        for col in df.columns
-    ]
-    columnas_prioridad = ['Model', 'Nvariables', 'nFolds', 'Seed', 'Fold']
-    columnas_actuales = list(df.columns)
-    columnas_prioridad_existentes = [col for col in columnas_prioridad if col in columnas_actuales]
-    nuevas_columnas = columnas_prioridad_existentes + [col for col in columnas_actuales if col not in columnas_prioridad_existentes]
-    return df[nuevas_columnas]
-
-df_testpredcv = reordenar_columnas(df_testpredcv)
-df_leaderboard = reordenar_columnas(df_leaderboard)
-df_feature_importance = reordenar_columnas(df_feature_importance)
-df_metrics = reordenar_columnas(df_metrics)
-
-# Creo un diccionario para homogenerizar nombres de df_metrics y df_leader board
-# Creo un diccionario para homogenerizar nombres de df_metrics y df_leader board
-mapeo_metricas = {
-    # Métricas de precisión
-    'precision_macro': 'Precision',
-    'Precision_macro': 'Precision_macro',
-    'precision': 'Precision',
-    'Precision_weighted': 'Precision_weighted',
-    'average_precision': 'average_precision',
-    'Precision_0': 'Precision_0',
-    'Precision_1': 'Precision_1',
-    # Métricas de recall
-    'recall_macro': 'Recall_macro',
-    'Recall_macro': 'Recall_macro',
-    'recall': 'Recall',
-    'Recall_weighted': 'Recall_Weighted',
-    'Recall_0': 'Recall_0',
-    'Recall_1': 'Recall_1',
-    # Métricas de F1
-    'f1': 'F1',
-    'F1_macro': 'F1_macro',
-    'f1_micro': 'F1_micro',
-    'F1_weighted': 'F1_weighted',
-    # Métricas de evaluación general
-    'balanced_accuracy': 'Balanced_Accuracy',
-    'Balanced_accuracy': 'Balanced_Accuracy',
-    'roc_auc': 'ROC_AUC',
-    'Roc_auc': 'ROC_AUC',
-    'auc': 'ROC_AUC',
-    'pr_auc': 'PR_AUC',
-    'score_test': 'Score_Test',
-    'score_val': 'Score_Validation',
-    'log_loss': 'Log_Loss',
-}
-
-def renombrar_columnas(df, mapeo):
-    columnas_actuales = df.columns
-    nuevas_columnas = {}
-    for col in columnas_actuales:
-        col_lower = col.lower()
-        if col in mapeo:
-            nuevas_columnas[col] = mapeo[col]
-        elif col_lower in [k.lower() for k in mapeo]:
-            key = [k for k in mapeo if k.lower() == col_lower][0]
-            nuevas_columnas[col] = mapeo[key]
-        else:
-            nuevas_columnas[col] = col
-    df_renombrado = df.rename(columns=nuevas_columnas)
-    return df_renombrado
-df_metrics = renombrar_columnas(df_metrics, mapeo_metricas)
-df_leaderboard = renombrar_columnas(df_leaderboard, mapeo_metricas)
-
-df_leaderboard = df_leaderboard[df_leaderboard['Model'].str.startswith('CatBoost')]
-df_testpredcv = df_testpredcv[df_testpredcv['Model'].str.startswith('CatBoost')]
-df_feature_importance = df_feature_importance[df_feature_importance['Model'].str.startswith('CatBoost')]
-df_metrics = df_metrics[df_metrics['Model'].str.startswith('CatBoost')]
-#""" Presentación
-#Voy a acometer objetivos en primer lugar:
-#- Dadas varias particiones del conjunto de entrenamiento, ¿qué partición tiene un comportamiento medio, cuál tiene el peor comportamiento y cuál el mejor?
-#- Dados varios modelos de ML que solucionan el problema. ¿Cuáles son los 5 modelos que tienen un comportamiento más robusto?¿cuáles son sus característicsa?
-#- De todas las variables del dataset de entrada, cuáles son las más relevantes teniendo en cuenta los resultados de cada modelo.
-#- De todas las configuraciones de parámetros probadas para una misma arquitectura, seleccionar el subconjunto de las más prometedoras.
-
+df_leaderboard = pd.read_parquet('df_leaderboard.parquet')
+df_testpredcv = pd.read_parquet('df_testpredcv.parquet')
+df_feature_importance = pd.read_parquet('df_feature_importance.parquet')
+df_metrics = pd.read_parquet('df_metrics.parquet')
 st.markdown(
     """
     <style>
@@ -355,26 +168,33 @@ avg_by_vars = filtered_df.groupby('Nvariables').agg({'ROC_AUC': 'mean'}).reset_i
 # Agrupar por número de folds y calcular media
 avg_by_folds = filtered_df.groupby('nFolds').agg({'ROC_AUC': 'mean'}).reset_index()
 
-# Gráfico de barras para número de variables
+# Gráfico de barras horizontales para número de variables
+# Gráfico de barras horizontales para número de variables con paleta personalizada
 chart_vars = alt.Chart(avg_by_vars).mark_bar().encode(
-    x=alt.X('Nvariables:N', title='Número de Variables'),
-    y=alt.Y('ROC_AUC:Q', title='Media ROC_AUC'),
-    color=alt.Color('Nvariables:N', legend=alt.Legend(title='Variables')),
+    y=alt.Y('Nvariables:N', title='Número de Variables'),
+    x=alt.X('ROC_AUC:Q', title='Media ROC_AUC'),
+    color=alt.Color('Nvariables:N', legend=alt.Legend(title='Variables'), 
+                    scale=alt.Scale(scheme='set2')),
     tooltip=['Nvariables', 'ROC_AUC']
 ).properties(
     title='Media de ROC_AUC por Número de Variables'
 )
+
 st.altair_chart(chart_vars, use_container_width=True)
-# Gráfico de barras para número de folds
+
+# Gráfico de barras horizontales para número de folds con otra paleta
 chart_folds = alt.Chart(avg_by_folds).mark_bar().encode(
-    x=alt.X('nFolds:N', title='Número de Folds'),
-    y=alt.Y('ROC_AUC:Q', title='Media ROC_AUC'),
-    color=alt.Color('nFolds:N', legend=alt.Legend(title='Folds')),
+    y=alt.Y('nFolds:N', title='Número de Folds'),
+    x=alt.X('ROC_AUC:Q', title='Media ROC_AUC'),
+    color=alt.Color('nFolds:N', legend=alt.Legend(title='Folds'), 
+                    scale=alt.Scale(scheme='paired')),
     tooltip=['nFolds', 'ROC_AUC']
 ).properties(
     title='Media de ROC_AUC por Número de Folds'
 )
+
 st.altair_chart(chart_folds, use_container_width=True)
+
 df_filtered = df_feature_importance[
     (df_feature_importance['Nvariables'].isin(nvariables_filter)) &
     (df_feature_importance['nFolds'].isin(nfolds_filter)) &
@@ -452,3 +272,94 @@ st.altair_chart(chart, use_container_width=True)
 #)
 #
 #st.altair_chart(chart, use_container_width=True)
+
+
+
+
+
+df_leaderboard_filtered = df_leaderboard[
+    (df_leaderboard['Nvariables'].isin(nvariables_filter)) &
+    (df_leaderboard['nFolds'].isin(nfolds_filter)) &
+    (df_leaderboard['Seed'].isin(seed_filter)) &
+    (df_leaderboard['Model'].isin(selected_models))
+]
+
+
+df_grouped = df_leaderboard_filtered.groupby('Fold').agg({
+    'ROC_AUC': 'mean',
+    'Roc_auc_byFold': 'max'
+}).reset_index()
+
+# Renombramos las columnas para mayor claridad
+df_grouped.columns = ['Fold', 'ROC_AUC_fold', 'ROC_AUC_modelo']
+
+# Convertimos a formato largo
+df_long = df_grouped.melt('Fold', var_name='Tipo', value_name='Valor')
+
+# Crear la gráfica de barras con diferentes colores por fold
+bars = alt.Chart(df_long[df_long['Tipo'] == 'ROC_AUC_fold']).mark_bar().encode(
+    x=alt.X('Fold:O', title='Fold'),
+    y=alt.Y('Valor:Q', title='ROC_AUC_fold'),
+    color=alt.Color('Fold:N', legend=None),  # Asigna un color distinto a cada fold
+    tooltip=['Fold', 'Valor']
+)
+
+# Crear la línea del máximo
+line = alt.Chart(df_long[df_long['Tipo'] == 'ROC_AUC_modelo']).mark_line(color='blue', size=2).encode(
+    x='Fold:O',
+    y='Valor:Q',
+    tooltip=['Fold', 'Valor']
+)
+
+# Combinar las gráficas
+chart = (bars + line).properties(
+    width=700,
+    height=400,
+    title='ROC_AUC por Fold frente al del modelo'
+)
+
+
+st.altair_chart(chart, use_container_width=True)
+
+
+df_testpredcv_filtered = df_testpredcv[
+    (df_testpredcv['Nvariables'].isin(nvariables_filter)) &
+    (df_testpredcv['nFolds'].isin(nfolds_filter)) &
+    (df_testpredcv['Seed'].isin(seed_filter)) &
+    (df_testpredcv['Model'].isin(selected_models))
+]
+
+# 1. Identificar errores: si la predicción fue incorrecta
+# Suponiendo que testPredProba >= 0.5 significa predicción clase 1, < 0.5 clase 0
+# Pero en tus datos, no tienes la predicción real, solo la probabilidad. 
+# Para simplificar, supongamos que la predicción es 0 si probabilidad < 0.5, 1 si >= 0.5
+df_testpredcv_filtered['pred'] = (df_testpredcv_filtered['testPredProba'] >= 0.5).astype(int)
+df_testpredcv_filtered['error'] = (df_testpredcv_filtered['pred'] != df_testpredcv_filtered['clasereal']).astype(int)
+
+# 2. Contar errores y aciertos por muestra
+resumen = df_testpredcv_filtered.groupby(['etiq-id', 'clasereal']).agg(
+    errores=('error', 'sum'),  # cuántas veces fue incorrecta
+    correctas=('error', lambda x: (x==0).sum())  # cuántas veces correcta
+).reset_index()
+
+# 3. Para el diagrama, necesitamos: 
+# - eje x: número de errores
+# - eje y: número de aciertos
+# - tamaño de burbuja: número total de clasificaciones (errores + correctas)
+resumen['total'] = resumen['errores'] + resumen['correctas']
+
+# 4. Crear el gráfico de burbujas en Altair
+chart = alt.Chart(resumen).mark_circle().encode(
+    x=alt.X('correctas:Q', title='Número de clasificaciones correctas'),
+    y=alt.Y('errores:Q', title='Número de clasificaciones incorrectas'),
+    size=alt.Size('errores:Q', title='Total de clasificaciones'),
+    color=alt.Color('etiq-id', legend=alt.Legend(title="etiq-id")),
+    tooltip=['etiq-id', 'clasereal', 'errores', 'correctas', 'total']
+).properties(
+    width=600,
+    height=400,
+    title='Errores vs Aciertos por muestra'
+)
+
+
+st.altair_chart(chart, use_container_width=True)
