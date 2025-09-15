@@ -7,8 +7,6 @@ Original file is located at
     https://colab.research.google.com/drive/163osb8WRzi8viOgPJxv5283PmBntEPv9
 """
 
-
-
 import streamlit as st
 import pandas as pd
 import glob
@@ -22,7 +20,7 @@ from sklearn.metrics import (
 import altair as alt
 import matplotlib.pyplot as plt
 
-
+#Carga de datos ya procesados
 df_leaderboard = pd.read_parquet('df_leaderboard.parquet')
 df_testpredcv = pd.read_parquet('df_testpredcv.parquet')
 df_feature_importance = pd.read_parquet('df_feature_importance.parquet')
@@ -35,12 +33,16 @@ st.markdown(
         margin: 0 !important;
     }
     </style>
+    <style>
+        .css-xyz123 {
+            background-color: #1f77b4 !important;  /* Azul */
+        }
+    </style>
     """, unsafe_allow_html=True
 )
-# Supongo que ya tienes tu DataFrame df_metrics cargado
 df = df_metrics
 
-# --- Filtros en sidebar ---
+#Panel de filtros laterales
 st.sidebar.title("Filtros")
 nvariables_options = sorted(df['Nvariables'].unique())
 nfolds_options = sorted(df['nFolds'].unique())
@@ -64,68 +66,46 @@ seed_filter = st.sidebar.multiselect(
     default=seed_options
 )
 
-# --- Filtrado ---
 df_top = df[
     (df['Nvariables'].isin(nvariables_filter)) &
     (df['nFolds'].isin(nfolds_filter)) &
     (df['Seed'].isin(seed_filter))
 ]
 roc_seed = df_top.groupby('Seed')['ROC_AUC'].mean().reset_index()
-
-# Calcula la media global
 global_mean = roc_seed['ROC_AUC'].mean()
-
-# Crear el DataFrame para la línea de media
 mean_df = pd.DataFrame({
     'Seed': roc_seed['Seed'],
     'ROC_AUC': [global_mean] * len(roc_seed)
 })
-
-# Crear la gráfica con Altair
 base = alt.Chart(roc_seed).encode(
     x=alt.X('Seed:O', title='Seed'),
     y=alt.Y('ROC_AUC:Q', title='ROC AUC medio'),
     tooltip=['Seed', 'ROC_AUC']
 )
-
-# Barras para cada seed
 bars = base.mark_bar().encode(
     color='Seed:N'
 )
-
-# Línea de media global
 line = alt.Chart(mean_df).mark_line(color='black', strokeDash=[5,5]).encode(
     x='Seed:O',
     y='ROC_AUC:Q'
 )
-
-# Combinamos barras y línea
 chart = (bars + line).properties(
     title='ROC AUC medio por Seed'
 ).interactive()
-
-# Ajustar escala y rango del eje y
 chart = chart.encode(
     y=alt.Y('ROC_AUC:Q', scale=alt.Scale(domain=[0.85, 0.94]))
 )
-
-# Mostrar en Streamlit
 st.title("Análisis de ROC AUC por Seed")
 st.altair_chart(chart, use_container_width=True)
 
 model_stats = df_top.groupby('Model').agg({
     'ROC_AUC': 'mean',
-    'Precision_macro': 'mean',  # si quieres la media de otras métricas también
+    'Precision_macro': 'mean',
     'Recall_macro': 'mean'
 }).reset_index()
 
-# Selecciona cuántos modelos quieres mostrar con slider
 k = st.slider('Número de mejores modelos a mostrar', min_value=1, max_value=len(model_stats), value=5)
-
-# Selecciona los K mejores modelos según media de ROC_AUC
 top_models = model_stats.nlargest(k, 'ROC_AUC')
-
-# Opcional: permitir seleccionar modelos específicos si quieres
 model_options = top_models['Model']
 selected_models = st.multiselect(
     'Selecciona los modelos a incluir',
@@ -133,17 +113,13 @@ selected_models = st.multiselect(
     default=model_options.tolist()
 )
 
-# Ahora, filtra el DataFrame original para incluir solo los modelos seleccionados
 filtered_df = df_top[df_top['Model'].isin(selected_models)]
-
 model_means = filtered_df.groupby('Model').agg({
     'ROC_AUC': 'mean',
     'Precision_macro': 'mean',
     'Recall_macro': 'mean'
 }).reset_index()
 
-
-# Aquí tu diagrama de burbujas
 chart = alt.Chart(
     model_means
 ).mark_circle().encode(
@@ -159,17 +135,9 @@ chart = alt.Chart(
 )
 st.altair_chart(chart, use_container_width=True)
 
-# Supón que tu DataFrame se llama df_top y tiene las columnas necesarias:
-# 'num_variables', 'num_folds', 'ROC_AUC'
-
-# Agrupar por número de variables y calcular media
 avg_by_vars = filtered_df.groupby('Nvariables').agg({'ROC_AUC': 'mean'}).reset_index()
-
-# Agrupar por número de folds y calcular media
 avg_by_folds = filtered_df.groupby('nFolds').agg({'ROC_AUC': 'mean'}).reset_index()
 
-# Gráfico de barras horizontales para número de variables
-# Gráfico de barras horizontales para número de variables con paleta personalizada
 chart_vars = alt.Chart(avg_by_vars).mark_bar().encode(
     y=alt.Y('Nvariables:N', title='Número de Variables'),
     x=alt.X('ROC_AUC:Q', title='Media ROC_AUC'),
@@ -179,10 +147,8 @@ chart_vars = alt.Chart(avg_by_vars).mark_bar().encode(
 ).properties(
     title='Media de ROC_AUC por Número de Variables'
 )
-
 st.altair_chart(chart_vars, use_container_width=True)
 
-# Gráfico de barras horizontales para número de folds con otra paleta
 chart_folds = alt.Chart(avg_by_folds).mark_bar().encode(
     y=alt.Y('nFolds:N', title='Número de Folds'),
     x=alt.X('ROC_AUC:Q', title='Media ROC_AUC'),
@@ -192,7 +158,6 @@ chart_folds = alt.Chart(avg_by_folds).mark_bar().encode(
 ).properties(
     title='Media de ROC_AUC por Número de Folds'
 )
-
 st.altair_chart(chart_folds, use_container_width=True)
 
 df_filtered = df_feature_importance[
@@ -201,81 +166,21 @@ df_filtered = df_feature_importance[
     (df_feature_importance['Seed'].isin(seed_filter)) &
     (df_feature_importance['Model'].isin(selected_models))
 ]
-
-# Agrupar por feature y calcular la importancia media
 importance_media = df_filtered.groupby('feature').agg({
     'importance': 'mean'
 }).reset_index()
-
-# Ordenar las variables por importancia media descendente
 importance_media = importance_media.sort_values(by='importance', ascending=False)
 
-# Crear gráfico de barras horizontales
 chart = alt.Chart(importance_media).mark_bar().encode(
     y=alt.Y('feature:N', sort='-x', title='Variables'),
     x=alt.X('importance:Q', title='Importancia media'),
     tooltip=['feature', 'importance']
 ).properties(
     width=700,
-    height=importance_media.shape[0] * 25,  # ajusta la altura según número de variables
+    height=importance_media.shape[0] * 25,
     title='Ranking de variables por importancia media'
 )
-
-# Mostrar en Streamlit
 st.altair_chart(chart, use_container_width=True)
-
-## 1. Filtra df_leaderboard
-#df_filtered = df_leaderboard[
-#    (df_leaderboard['Nvariables'].isin(nvariables_filter)) &
-#    (df_leaderboard['nFolds'].isin(nfolds_filter)) &
-#    (df_leaderboard['Seed'].isin(seed_filter)) &
-#    (df_leaderboard['Model'].isin(selected_models))
-#]
-#
-## 2. Calcula la media de ROC AUC por fold
-#roc_auc_per_fold = df_filtered.groupby('Fold')['Score_Test'].mean().reset_index()
-#
-## 3. Obtén el ROC AUC total para todo el dataset (puede estar en un registro específico o calcularlo)
-## Si tienes una predicción global, sería algo así:
-## Supón que en `df_leaderboard` hay una fila con `Fold == 'Total'` o similar
-## Si no, deberías calcularlo con las predicciones en conjunto.
-#roc_auc_total = df_leaderboard[df_leaderboard['Fold'] == 'Total']['Score_Test'].values
-## Si no tienes fila 'Total', deberías calcularlo desde las predicciones completas
-#
-## Para ejemplo:
-#if len(roc_auc_total) == 0:
-#    # Aquí debes calcularlo desde las predicciones globales
-#    # Por ejemplo, si tienes los valores verdaderos y predichos:
-#    # from sklearn.metrics import roc_auc_score
-#    # roc_auc_total_value = roc_auc_score(y_true_total, y_pred_total)
-#    roc_auc_total_value = None
-#else:
-#    roc_auc_total_value = roc_auc_total[0]
-#
-## 4. Visualización
-#import altair as alt
-#
-## Crear DataFrame para plot
-#df_plot = roc_auc_per_fold.copy()
-## Añadir la línea del valor total
-#df_plot = df_plot.append({'Fold': 'Total', 'Score_Test': roc_auc_total_value}, ignore_index=True)
-#
-## Gráfico de barras
-#chart = alt.Chart(df_plot).mark_bar().encode(
-#    y=alt.Y('Fold:N', sort='-x', title='Fold'),
-#    x=alt.X('Score_Test:Q', title='ROC AUC'),
-#    tooltip=['Fold', 'Score_Test']
-#).properties(
-#    width=600,
-#    height=300,
-#    title='ROC AUC por fold y total'
-#)
-#
-#st.altair_chart(chart, use_container_width=True)
-
-
-
-
 
 df_leaderboard_filtered = df_leaderboard[
     (df_leaderboard['Nvariables'].isin(nvariables_filter)) &
@@ -284,43 +189,33 @@ df_leaderboard_filtered = df_leaderboard[
     (df_leaderboard['Model'].isin(selected_models))
 ]
 
-
 df_grouped = df_leaderboard_filtered.groupby('Fold').agg({
     'ROC_AUC': 'mean',
     'Roc_auc_byFold': 'max'
 }).reset_index()
 
-# Renombramos las columnas para mayor claridad
 df_grouped.columns = ['Fold', 'ROC_AUC_fold', 'ROC_AUC_modelo']
-
-# Convertimos a formato largo
 df_long = df_grouped.melt('Fold', var_name='Tipo', value_name='Valor')
 
-# Crear la gráfica de barras con diferentes colores por fold
 bars = alt.Chart(df_long[df_long['Tipo'] == 'ROC_AUC_fold']).mark_bar().encode(
     x=alt.X('Fold:O', title='Fold'),
     y=alt.Y('Valor:Q', title='ROC_AUC_fold'),
-    color=alt.Color('Fold:N', legend=None),  # Asigna un color distinto a cada fold
+    color=alt.Color('Fold:N', legend=None),
     tooltip=['Fold', 'Valor']
 )
 
-# Crear la línea del máximo
 line = alt.Chart(df_long[df_long['Tipo'] == 'ROC_AUC_modelo']).mark_line(color='blue', size=2).encode(
     x='Fold:O',
     y='Valor:Q',
     tooltip=['Fold', 'Valor']
 )
 
-# Combinar las gráficas
 chart = (bars + line).properties(
-    width=700,
-    height=400,
+    width=650,
+    height=350,
     title='ROC_AUC por Fold frente al del modelo'
 )
-
-
 st.altair_chart(chart, use_container_width=True)
-
 
 df_testpredcv_filtered = df_testpredcv[
     (df_testpredcv['Nvariables'].isin(nvariables_filter)) &
@@ -328,27 +223,13 @@ df_testpredcv_filtered = df_testpredcv[
     (df_testpredcv['Seed'].isin(seed_filter)) &
     (df_testpredcv['Model'].isin(selected_models))
 ]
-
-# 1. Identificar errores: si la predicción fue incorrecta
-# Suponiendo que testPredProba >= 0.5 significa predicción clase 1, < 0.5 clase 0
-# Pero en tus datos, no tienes la predicción real, solo la probabilidad. 
-# Para simplificar, supongamos que la predicción es 0 si probabilidad < 0.5, 1 si >= 0.5
 df_testpredcv_filtered['pred'] = (df_testpredcv_filtered['testPredProba'] >= 0.5).astype(int)
 df_testpredcv_filtered['error'] = (df_testpredcv_filtered['pred'] != df_testpredcv_filtered['clasereal']).astype(int)
-
-# 2. Contar errores y aciertos por muestra
 resumen = df_testpredcv_filtered.groupby(['etiq-id', 'clasereal']).agg(
-    errores=('error', 'sum'),  # cuántas veces fue incorrecta
-    correctas=('error', lambda x: (x==0).sum())  # cuántas veces correcta
+    errores=('error', 'sum'),
+    correctas=('error', lambda x: (x==0).sum())
 ).reset_index()
-
-# 3. Para el diagrama, necesitamos: 
-# - eje x: número de errores
-# - eje y: número de aciertos
-# - tamaño de burbuja: número total de clasificaciones (errores + correctas)
 resumen['total'] = resumen['errores'] + resumen['correctas']
-
-# 4. Crear el gráfico de burbujas en Altair
 chart = alt.Chart(resumen).mark_circle().encode(
     x=alt.X('correctas:Q', title='Número de clasificaciones correctas'),
     y=alt.Y('errores:Q', title='Número de clasificaciones incorrectas'),
@@ -360,6 +241,4 @@ chart = alt.Chart(resumen).mark_circle().encode(
     height=400,
     title='Errores vs Aciertos por muestra'
 )
-
-
 st.altair_chart(chart, use_container_width=True)

@@ -1,0 +1,5 @@
+El script ETL.py se ejecuta como un python estándar:
+python grafico.py
+
+Las visualizaciones se ejecutan con streamlit 
+streamlit run VD.py
